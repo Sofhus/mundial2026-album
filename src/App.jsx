@@ -5,6 +5,7 @@ import {
   RARE_STICKERS, SECTIONS, TEAM_LIST,
   STICKER_MAP, parseRangeInput, idsToRanges
 } from './data/stickerData.js'
+import { supabase, signInWithEmail, signOut, loadProgress, saveProgress } from './lib/supabase.js'
 
 // ─── Persistence ─────────────────────────────────────────────────────────────
 function loadOwned() {
@@ -692,12 +693,86 @@ function ExportarTab({ allStickers, owned }) {
   )
 }
 
+// ─── Auth modal (magic link via email) ───────────────────────────────────────
+function AuthModal({ onClose }) {
+  const [email, setEmail]   = useState('')
+  const [status, setStatus] = useState('idle') // idle | sending | sent | error
+  const [error, setError]   = useState('')
+
+  async function send() {
+    if (!email.trim()) return
+    setStatus('sending'); setError('')
+    const { error } = await signInWithEmail(email.trim())
+    if (error) { setStatus('error'); setError(error.message); return }
+    setStatus('sent')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-5"
+      style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <div className="w-full max-w-sm p-6 surface" onClick={e => e.stopPropagation()}>
+        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: '#999' }}>
+          Guardar en la nube
+        </p>
+        <h2 className="font-bold text-xl mb-2" style={{ color: '#111' }}>
+          Sincroniza tu progreso
+        </h2>
+        <p className="text-sm leading-relaxed mb-4" style={{ color: '#666' }}>
+          Te enviamos un link a tu correo para iniciar sesión. Tu progreso queda guardado en la nube y lo ves desde cualquier celular o computadora.
+        </p>
+
+        {status === 'sent' ? (
+          <div className="rounded-xl p-4 text-center mb-2"
+            style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)' }}>
+            <p className="font-bold text-sm" style={{ color: '#15803d' }}>Revisa tu correo</p>
+            <p className="text-xs mt-1" style={{ color: '#666' }}>
+              Te mandamos un link a <span className="font-semibold">{email}</span>. Ábrelo desde este mismo dispositivo.
+            </p>
+          </div>
+        ) : (
+          <>
+            <input type="email" autoFocus
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()}
+              placeholder="tu@correo.com"
+              className="w-full text-sm rounded-xl px-4 py-2.5 mb-2 outline-none transition-colors"
+              style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111' }}
+              onFocus={e => e.target.style.borderColor='rgba(124,58,237,0.45)'}
+              onBlur={e =>  e.target.style.borderColor='rgba(0,0,0,0.1)'} />
+            {error && <p className="text-xs mb-2" style={{ color: '#e53935' }}>{error}</p>}
+          </>
+        )}
+
+        <div className="flex gap-2 mt-3">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: 'rgba(0,0,0,0.06)', color: '#666' }}>
+            {status === 'sent' ? 'Cerrar' : 'Cancelar'}
+          </button>
+          {status !== 'sent' && (
+            <button onClick={send} disabled={status === 'sending' || !email.trim()}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
+              style={{ background: status === 'sending' || !email.trim() ? '#c4b5fd' : '#7c3aed',
+                       cursor: status === 'sending' || !email.trim() ? 'not-allowed' : 'pointer' }}>
+              {status === 'sending' ? 'Enviando...' : 'Enviar link'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [owned,         setOwned]         = useState(loadOwned)
   const [tab,           setTab]           = useState('album')
   const [hasCoca,       setHasCoca]       = useState(() => loadHasCoca() === 'true')
   const [showCocaModal, setShowCocaModal] = useState(() => loadHasCoca() === null)
+  const [user,          setUser]          = useState(null)
+  const [showAuth,      setShowAuth]      = useState(false)
+  const initialSyncDone = useRef(false)
 
   const allStickers = useMemo(
     () => hasCoca ? ALL_STICKERS_CC : ALL_STICKERS,
@@ -706,11 +781,56 @@ export default function App() {
 
   useEffect(() => { saveOwned(owned) }, [owned])
 
+  // Subscribe to auth state changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (!session) initialSyncDone.current = false
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  // First sync after login: merge cloud + local progress (union, never lose stickers)
+  useEffect(() => {
+    if (!user || initialSyncDone.current) return
+    initialSyncDone.current = true
+    loadProgress(user.id).then(data => {
+      if (!data) {
+        // Cloud empty → push local up
+        saveProgress(user.id, [...owned], hasCoca).catch(console.error)
+      } else {
+        // Merge cloud + local
+        const merged = new Set([...owned, ...(data.owned_ids || [])])
+        const cocaMerged = data.has_coca || hasCoca
+        if (merged.size !== owned.size) setOwned(merged)
+        if (cocaMerged !== hasCoca) { setHasCoca(cocaMerged); saveHasCoca(cocaMerged) }
+        // If we added anything, push the union back so cloud has it too
+        if (merged.size !== (data.owned_ids || []).length || cocaMerged !== data.has_coca) {
+          saveProgress(user.id, [...merged], cocaMerged).catch(console.error)
+        }
+      }
+    }).catch(console.error)
+  }, [user])
+
+  // Debounced cloud save on every change
+  useEffect(() => {
+    if (!user || !initialSyncDone.current) return
+    const t = setTimeout(() => {
+      saveProgress(user.id, [...owned], hasCoca).catch(console.error)
+    }, 600)
+    return () => clearTimeout(t)
+  }, [owned, hasCoca, user])
+
   function handleCocaChoice(val) {
     setHasCoca(val); saveHasCoca(val); setShowCocaModal(false)
   }
   function toggleCoca() {
     const next = !hasCoca; setHasCoca(next); saveHasCoca(next)
+  }
+  async function handleLogout() {
+    await signOut()
+    initialSyncDone.current = false
   }
 
   const toggle    = useCallback(id => {
@@ -737,6 +857,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
       {showCocaModal && <CocaModal onChoice={handleCocaChoice} />}
+      {showAuth     && <AuthModal  onClose={() => setShowAuth(false)} />}
 
       {/* Header */}
       <header className="sticky top-0 z-30"
@@ -753,9 +874,27 @@ export default function App() {
                 Mundial 2026
               </h1>
             </div>
-            <div className="text-right">
-              <span className="text-3xl font-black tabular-nums" style={{ color: C.purple }}>{pct}%</span>
-              <p className="text-xs" style={{ color: '#aaa' }}>{ownedAct} / {totalAct}</p>
+            <div className="flex items-end gap-3">
+              {!user && (
+                <button onClick={() => setShowAuth(true)}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors"
+                  style={{ background: 'rgba(124,58,237,0.1)', color: C.purple }}
+                  onMouseOver={e => e.currentTarget.style.background='rgba(124,58,237,0.18)'}
+                  onMouseOut={e =>  e.currentTarget.style.background='rgba(124,58,237,0.1)'}>
+                  Guardar progreso
+                </button>
+              )}
+              {user && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+                  style={{ background: 'rgba(22,163,74,0.08)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.emerald }} />
+                  <span className="text-[10px] font-semibold" style={{ color: '#15803d' }}>Sincronizado</span>
+                </div>
+              )}
+              <div className="text-right">
+                <span className="text-3xl font-black tabular-nums" style={{ color: C.purple }}>{pct}%</span>
+                <p className="text-xs" style={{ color: '#aaa' }}>{ownedAct} / {totalAct}</p>
+              </div>
             </div>
           </div>
           <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
@@ -790,6 +929,20 @@ export default function App() {
       {/* Footer */}
       <footer className="max-w-6xl w-full mx-auto px-4 lg:px-8 pb-8 pt-6 mt-2"
         style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        {user && (
+          <div className="text-center mb-4 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <p className="text-xs" style={{ color: '#888' }}>
+              Sesión: <span className="font-semibold" style={{ color: '#444' }}>{user.email}</span>
+            </p>
+            <button onClick={handleLogout}
+              className="text-xs mt-1 font-semibold transition-colors"
+              style={{ color: '#bbb' }}
+              onMouseOver={e => e.currentTarget.style.color='#e53935'}
+              onMouseOut={e =>  e.currentTarget.style.color='#bbb'}>
+              Cerrar sesión
+            </button>
+          </div>
+        )}
         <div className="text-center space-y-1">
           <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#ccc' }}>Creado por</p>
           <p className="text-sm font-bold tracking-tight" style={{ color: '#888' }}>Shift</p>
