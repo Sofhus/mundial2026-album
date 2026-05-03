@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
-  ALL_STICKERS, ALL_STICKERS_CC, CC_STICKERS,
-  TOTAL, TOTAL_CC,
-  RARE_STICKERS, SECTIONS, TEAM_LIST,
-  STICKER_MAP, parseRangeInput, idsToRanges
+  ALL_STICKERS, ALL_STICKERS_CC,
+  SECTIONS, TEAM_LIST,
+  parseRangeInput,
 } from './data/stickerData.js'
 import {
   supabase, signInWithEmail, signInWithGoogle, signOut,
   loadProgress, saveProgress,
-  getOrCreateShareToken, joinAlbumByToken, getMyAlbumOwnerId
+  getOrCreateShareToken, joinAlbumByToken, getMyAlbumOwnerId,
 } from './lib/supabase.js'
 
-// ─── Persistence ─────────────────────────────────────────────────────────────
 function loadOwned() {
   try { return new Set(JSON.parse(localStorage.getItem('owned_2026v2') || '[]')) }
   catch { return new Set() }
@@ -20,7 +18,6 @@ function saveOwned(set) { localStorage.setItem('owned_2026v2', JSON.stringify([.
 function loadHasCoca() { return localStorage.getItem('coca_2026') }
 function saveHasCoca(v) { localStorage.setItem('coca_2026', v ? 'true' : 'false') }
 
-// Album color palette
 const C = {
   lime:    '#8bc34a',
   teal:    '#4db6ac',
@@ -31,25 +28,19 @@ const C = {
   strip:   'linear-gradient(90deg, #8bc34a 0%, #4db6ac 30%, #7c3aed 65%, #e53935 100%)',
 }
 
-// ─── Loading screen ───────────────────────────────────────────────────────────
+// ─── Loading ──────────────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#f2f2f5' }}>
-      <div className="flex flex-col items-center gap-3">
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          border: `2.5px solid ${C.purple}`,
-          borderTopColor: 'transparent',
-          animation: 'spin 0.7s linear infinite',
-        }} />
-        <p className="text-xs font-medium" style={{ color: '#bbb' }}>Cargando…</p>
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f5' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2.5px solid ${C.purple}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+        <p style={{ fontSize: 12, color: '#bbb', fontWeight: 500 }}>Cargando…</p>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
 
-// ─── Google icon ─────────────────────────────────────────────────────────────
 function GoogleIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
@@ -63,260 +54,417 @@ function GoogleIcon() {
 
 // ─── Login screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ hasPendingJoin }) {
-  const [email,       setEmail]       = useState('')
-  const [emailStatus, setEmailStatus] = useState('idle') // idle | sending | sent | error
+  const [email, setEmail]           = useState('')
+  const [emailStatus, setEmailStatus] = useState('idle')
   const [emailError,  setEmailError]  = useState('')
   const [googleError, setGoogleError] = useState('')
-
   const pendingToken = localStorage.getItem('pending_join_token')
 
   async function handleGoogle() {
     setGoogleError('')
     const { error } = await signInWithGoogle(pendingToken)
-    if (error) {
-      setGoogleError(
-        error.message?.includes('provider') || error.message?.includes('not enabled')
-          ? 'Google Sign-In no está activado aún. Usa tu correo por ahora.'
-          : error.message
-      )
-    }
-    // On success: redirects to Google and back. onAuthStateChange handles the session.
+    if (error) setGoogleError(error.message?.includes('provider') || error.message?.includes('not enabled') ? 'Google no está activado aún. Usa tu correo.' : error.message)
   }
-
   async function handleEmail() {
     if (!email.trim()) return
-    setEmailStatus('sending')
-    setEmailError('')
+    setEmailStatus('sending'); setEmailError('')
     const { error } = await signInWithEmail(email.trim(), pendingToken)
     if (error) { setEmailStatus('error'); setEmailError(error.message); return }
     setEmailStatus('sent')
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f2f2f5' }}>
       <div style={{ height: 3, background: C.strip }} />
-
-      <div className="flex-1 flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-sm">
-          {/* Wordmark */}
-          <div className="text-center mb-8">
-            <p className="text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: '#ccc' }}>Panini</p>
-            <h1 className="font-black text-[26px] tracking-tight leading-none mt-1" style={{ color: '#111' }}>
-              Mundial 2026
-            </h1>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: '#bbb' }}>by Shift</p>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+        <div style={{ width: '100%', maxWidth: 340 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <p style={{ fontSize: 9, letterSpacing: '0.2em', fontWeight: 700, color: '#ccc', textTransform: 'uppercase' }}>Panini</p>
+            <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em', color: '#111', marginTop: 4, lineHeight: 1 }}>Mundial 2026</h1>
+            <p style={{ fontSize: 12, color: '#bbb', fontWeight: 500, marginTop: 6 }}>by Shift</p>
           </div>
-
-          {/* Invite banner */}
           {hasPendingJoin && (
-            <div className="mb-5 px-4 py-3 rounded-2xl text-center"
-              style={{ background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)' }}>
-              <p className="font-semibold text-sm" style={{ color: C.purple }}>Te invitaron a llenar un álbum</p>
-              <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-                Inicia sesión para unirte y marcar estampas juntos
-              </p>
+            <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 16, textAlign: 'center', background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)' }}>
+              <p style={{ fontWeight: 600, fontSize: 13, color: C.purple }}>Te invitaron a llenar un álbum</p>
+              <p style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Inicia sesión para unirte</p>
             </div>
           )}
-
-          {/* Card */}
-          <div className="surface p-6">
-            {/* Google */}
-            <button onClick={handleGoogle}
-              className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all"
-              style={{ background: '#fff', border: '1.5px solid rgba(0,0,0,0.11)', color: '#333' }}
+          <div className="surface" style={{ padding: 24 }}>
+            <button onClick={handleGoogle} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', border: '1.5px solid rgba(0,0,0,0.11)', color: '#333', cursor: 'pointer', transition: 'background 0.15s' }}
               onMouseOver={e => e.currentTarget.style.background = '#f6f6f8'}
               onMouseOut={e  => e.currentTarget.style.background = '#fff'}>
-              <GoogleIcon />
-              Continuar con Google
+              <GoogleIcon /> Continuar con Google
             </button>
-
-            {googleError && (
-              <p className="text-xs mt-2.5 text-center leading-snug" style={{ color: '#e53935' }}>
-                {googleError}
-              </p>
-            )}
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
-              <span className="text-[11px]" style={{ color: '#c0c0c0' }}>o con tu correo</span>
-              <div className="flex-1 h-px" style={{ background: 'rgba(0,0,0,0.08)' }} />
+            {googleError && <p style={{ fontSize: 11, color: '#e53935', textAlign: 'center', marginTop: 8 }}>{googleError}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+              <span style={{ fontSize: 11, color: '#c0c0c0' }}>o con tu correo</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
             </div>
-
-            {/* Email flow */}
             {emailStatus === 'sent' ? (
-              <div className="px-4 py-4 rounded-xl text-center"
-                style={{ background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
-                <p className="font-bold text-sm" style={{ color: '#15803d' }}>Revisa tu correo</p>
-                <p className="text-xs mt-1 leading-relaxed" style={{ color: '#666' }}>
-                  Mandamos un link a <strong>{email}</strong>.
-                  Ábrelo desde este dispositivo.
-                </p>
-                <button onClick={() => setEmailStatus('idle')}
-                  className="text-xs mt-3 font-semibold"
-                  style={{ color: C.purple }}>
-                  Usar otro correo
-                </button>
+              <div style={{ padding: '16px', borderRadius: 12, textAlign: 'center', background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
+                <p style={{ fontWeight: 700, fontSize: 13, color: '#15803d' }}>Revisa tu correo</p>
+                <p style={{ fontSize: 11, color: '#666', marginTop: 4, lineHeight: 1.5 }}>Mandamos un link a <strong>{email}</strong>. Ábrelo desde este dispositivo.</p>
+                <button onClick={() => setEmailStatus('idle')} style={{ fontSize: 11, color: C.purple, fontWeight: 600, marginTop: 10, background: 'none', border: 'none', cursor: 'pointer' }}>Usar otro correo</button>
               </div>
             ) : (
               <>
-                <input type="email" autoFocus
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleEmail()}
-                  placeholder="tu@correo.com"
-                  className="w-full text-sm rounded-xl px-4 py-2.5 mb-2 outline-none transition-colors"
-                  style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111' }}
+                <input type="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleEmail()} placeholder="tu@correo.com"
+                  style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px', marginBottom: 8, outline: 'none', background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
                   onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
                   onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
-                {emailError && (
-                  <p className="text-xs mb-2" style={{ color: '#e53935' }}>{emailError}</p>
-                )}
-                <button onClick={handleEmail}
-                  disabled={emailStatus === 'sending' || !email.trim()}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-                  style={{
-                    background: emailStatus === 'sending' || !email.trim() ? '#c4b5fd' : C.purple,
-                    cursor:     emailStatus === 'sending' || !email.trim() ? 'not-allowed' : 'pointer',
-                  }}>
+                {emailError && <p style={{ fontSize: 11, color: '#e53935', marginBottom: 6 }}>{emailError}</p>}
+                <button onClick={handleEmail} disabled={emailStatus === 'sending' || !email.trim()}
+                  style={{ width: '100%', padding: '11px', borderRadius: 12, fontSize: 13, fontWeight: 600, color: '#fff', background: emailStatus === 'sending' || !email.trim() ? '#c4b5fd' : C.purple, border: 'none', cursor: emailStatus === 'sending' || !email.trim() ? 'not-allowed' : 'pointer' }}>
                   {emailStatus === 'sending' ? 'Enviando…' : 'Enviar link de acceso'}
                 </button>
               </>
             )}
           </div>
-
-          <p className="text-center text-[11px] mt-5" style={{ color: '#ccc' }}>
-            Tu progreso se guarda en la nube automáticamente
-          </p>
+          <p style={{ textAlign: 'center', fontSize: 11, color: '#ccc', marginTop: 20 }}>Tu progreso se guarda automáticamente</p>
         </div>
       </div>
-
-      <footer className="text-center pb-8">
-        <p className="text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: '#ddd' }}>Creado por</p>
-        <p className="text-sm font-bold mt-0.5" style={{ color: '#bbb' }}>Shift</p>
+      <footer style={{ textAlign: 'center', paddingBottom: 32 }}>
+        <p style={{ fontSize: 9, letterSpacing: '0.2em', fontWeight: 700, color: '#ddd', textTransform: 'uppercase' }}>Creado por</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#bbb', marginTop: 2 }}>Shift</p>
       </footer>
     </div>
   )
 }
 
-// ─── Share drawer ─────────────────────────────────────────────────────────────
-function ShareDrawer({ user, albumOwnerId, onClose }) {
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+function Confetti() {
+  const COLORS = [C.purple, C.lime, C.teal, C.red, C.gold, '#f472b6', '#60a5fa', '#fb923c']
+  const particles = useMemo(() =>
+    Array.from({ length: 80 }, (_, i) => ({
+      id: i, x: Math.random() * 100, delay: Math.random() * 1.6,
+      dur: 2.2 + Math.random() * 2, color: COLORS[i % COLORS.length],
+      size: 5 + Math.random() * 9, round: Math.random() > 0.5,
+    })), []
+  )
+  return (
+    <>
+      <style>{`@keyframes cfDrop{0%{opacity:1;transform:translateY(-10px) rotate(0deg)}100%{opacity:0;transform:translateY(110vh) rotate(540deg)}}`}</style>
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 89, overflow: 'hidden' }}>
+        {particles.map(p => (
+          <div key={p.id} style={{
+            position: 'absolute', left: `${p.x}%`, top: 0,
+            width: p.size, height: p.round ? p.size : p.size * 0.55,
+            background: p.color, borderRadius: p.round ? '50%' : '2px',
+            animation: `cfDrop ${p.dur}s ${p.delay}s ease-in forwards`,
+          }} />
+        ))}
+      </div>
+    </>
+  )
+}
+
+// ─── Milestone celebration ────────────────────────────────────────────────────
+function MilestoneCelebration({ milestone, onClose }) {
+  const is100 = milestone === 100
+  return (
+    <>
+      <Confetti />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.45)' }} onClick={onClose}>
+        <div className="surface" style={{ padding: 32, textAlign: 'center', maxWidth: 300, width: '100%' }} onClick={e => e.stopPropagation()}>
+          <div style={{ width: 60, height: 60, margin: '0 auto 16px', borderRadius: '50%', background: is100 ? `linear-gradient(135deg,${C.gold},#f59e0b)` : `linear-gradient(135deg,${C.purple},#6d28d9)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {is100 ? (
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            ) : (
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            )}
+          </div>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#111', marginBottom: 8, lineHeight: 1.1 }}>
+            {is100 ? '¡Álbum completo!' : '¡Ya vas a la mitad!'}
+          </h2>
+          <p style={{ fontSize: 13, color: '#777', lineHeight: 1.6, marginBottom: 24 }}>
+            {is100 ? 'Conseguiste todas las estampas del álbum Panini FIFA Mundial 2026. Eso no lo logra cualquiera.' : 'Llevas el 50% del álbum. Ya falta menos, sigue así.'}
+          </p>
+          <button onClick={onClose} style={{ width: '100%', padding: '13px', borderRadius: 12, fontWeight: 700, fontSize: 13, color: '#fff', background: is100 ? C.gold : C.purple, border: 'none', cursor: 'pointer' }}>
+            {is100 ? '¡Gracias!' : 'Seguir llenando'}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Rare sticker toast ───────────────────────────────────────────────────────
+function RareToast({ sticker, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 5000); return () => clearTimeout(t) }, [onClose])
+  return (
+    <>
+      <style>{`@keyframes toastUp{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+      <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 80, width: 'calc(100% - 32px)', maxWidth: 360, animation: 'toastUp 0.3s ease-out' }}>
+        <div className="surface" style={{ padding: 16, display: 'flex', alignItems: 'flex-start', gap: 12, outline: `2px solid ${C.gold}`, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: C.gold, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <span style={{ fontSize: 7, fontWeight: 700, opacity: 0.75, letterSpacing: '0.06em' }}>{sticker.id.split('-')[0]}</span>
+            <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{sticker.num}</span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 700, fontSize: 13, color: '#111' }}>Estampa difícil de conseguir</p>
+            <p style={{ fontSize: 11, color: '#b45309', fontWeight: 600, marginTop: 2 }}>{sticker.label}</p>
+            {sticker.rareReason && <p style={{ fontSize: 11, color: '#aaa', marginTop: 2, lineHeight: 1.4 }}>{sticker.rareReason}</p>}
+          </div>
+          <button onClick={onClose} style={{ fontSize: 20, lineHeight: 1, color: '#ccc', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', marginTop: -2 }}>×</button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Panel: Exportar ──────────────────────────────────────────────────────────
+function ExportarContent({ allStickers, owned }) {
+  const [copied, setCopied] = useState('')
+  const missing = allStickers.filter(s => !owned.has(s.id))
+  const pct = Math.round((allStickers.filter(s => owned.has(s.id)).length / allStickers.length) * 100)
+
+  function buildText(format) {
+    const header = `Me faltan ${missing.length} estampas del álbum Panini FIFA Mundial 2026 (${pct}% completado)\n\n`
+    if (format === 'ranges') {
+      const byTeam = {}
+      missing.forEach(s => { if (!byTeam[s.section]) byTeam[s.section] = []; byTeam[s.section].push(s.num) })
+      const order = ['FWC', 'CC', ...TEAM_LIST.map(t => t.code)]
+      const lines = order.filter(c => byTeam[c]).map(c => {
+        const nums = [...new Set(byTeam[c])].sort((a, b) => a - b)
+        const ranges = []; let st = nums[0], en = nums[0]
+        for (let i = 1; i < nums.length; i++) { if (nums[i] === en + 1) { en = nums[i] } else { ranges.push(st === en ? `${st}` : `${st}-${en}`); st = en = nums[i] } }
+        ranges.push(st === en ? `${st}` : `${st}-${en}`)
+        return `${c}: ${ranges.join(', ')}`
+      })
+      return header + lines.join('\n')
+    }
+    if (format === 'bygroup') {
+      const lines = ['A','B','C','D','E','F','G','H','I','J','K','L'].map(g => {
+        const teams = TEAM_LIST.filter(t => t.group === g)
+        const tLines = teams.map(t => {
+          const tm = missing.filter(s => s.section === t.code)
+          if (!tm.length) return `  ${t.code}: completo`
+          const nums = tm.map(s => s.num).sort((a, b) => a - b)
+          const ranges = []; let st = nums[0], en = nums[0]
+          for (let i = 1; i < nums.length; i++) { if (nums[i] === en + 1) { en = nums[i] } else { ranges.push(st === en ? `${st}` : `${st}-${en}`); st = en = nums[i] } }
+          ranges.push(st === en ? `${st}` : `${st}-${en}`)
+          return `  ${t.code}: ${ranges.join(', ')}`
+        }).join('\n')
+        return `Grupo ${g}:\n${tLines}`
+      }).join('\n\n')
+      return header + lines
+    }
+    if (format === 'rare') {
+      const miss = allStickers.filter(s => s.isRare && !owned.has(s.id))
+      if (!miss.length) return 'Ya tengo todas las estampas raras del álbum 2026.'
+      return `Me faltan ${miss.length} estampas raras:\n\n` + miss.map(s => `${s.id} — ${s.label}`).join('\n') + '\n\n¿Tienes alguna para cambio?'
+    }
+  }
+
+  async function copy(format) { await navigator.clipboard.writeText(buildText(format)); setCopied(format); setTimeout(() => setCopied(''), 2000) }
+  function whatsapp(format) { window.open(`https://wa.me/?text=${encodeURIComponent(buildText(format))}`, '_blank') }
+
+  const formats = [
+    { id: 'ranges',  title: 'Por código y rango', desc: 'MEX: 3-7, 12 · ARG: 5, 18' },
+    { id: 'bygroup', title: 'Por grupo A–L',       desc: 'Organizado por grupo del torneo' },
+    { id: 'rare',    title: 'Solo las raras',      desc: 'Lista para buscar cambio' },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        {[
+          { val: missing.length,                                      label: 'Faltantes',   clr: '#111'    },
+          { val: allStickers.filter(s => owned.has(s.id)).length,     label: 'Conseguidas', clr: C.emerald },
+          { val: `${pct}%`,                                           label: 'Completado',  clr: C.purple  },
+        ].map(({ val, label, clr }) => (
+          <div key={label} style={{ background: '#f6f6f8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+            <p style={{ fontSize: 20, fontWeight: 900, color: clr, lineHeight: 1 }}>{val}</p>
+            <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
+          </div>
+        ))}
+      </div>
+      {formats.map(f => (
+        <div key={f.id} style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+          <p style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>{f.title}</p>
+          <p style={{ fontSize: 11, color: '#aaa', marginBottom: 10 }}>{f.desc}</p>
+          <div style={{ background: '#f0f0f3', borderRadius: 8, padding: '10px 12px', marginBottom: 10, maxHeight: 100, overflowY: 'auto' }}>
+            <pre style={{ fontSize: 10, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#666', lineHeight: 1.6, margin: 0 }}>{buildText(f.id)}</pre>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => copy(f.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: copied === f.id ? C.emerald : 'rgba(0,0,0,0.07)', color: copied === f.id ? '#fff' : '#555', border: 'none', cursor: 'pointer' }}>
+              {copied === f.id ? 'Copiado' : 'Copiar'}
+            </button>
+            <button onClick={() => whatsapp(f.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: '#25D366', color: '#fff', border: 'none', cursor: 'pointer' }}>
+              WhatsApp
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Panel: Compartir ─────────────────────────────────────────────────────────
+function CompartirContent({ user, albumOwnerId }) {
   const [copiedAccount, setCopiedAccount] = useState(false)
   const [copiedApp,     setCopiedApp]     = useState(false)
   const [loadingToken,  setLoadingToken]  = useState(false)
-
   const effectiveOwnerId = albumOwnerId || user.id
 
   async function handleShareAccount() {
     setLoadingToken(true)
     try {
       const token = await getOrCreateShareToken(effectiveOwnerId)
-      const url   = `${window.location.origin}?join=${token}`
-      await navigator.clipboard.writeText(url)
-      setCopiedAccount(true)
-      setTimeout(() => setCopiedAccount(false), 2500)
-    } catch (e) {
-      console.error(e)
-    }
+      await navigator.clipboard.writeText(`${window.location.origin}?join=${token}`)
+      setCopiedAccount(true); setTimeout(() => setCopiedAccount(false), 2500)
+    } catch(e) { console.error(e) }
     setLoadingToken(false)
   }
-
   async function handleShareApp() {
     await navigator.clipboard.writeText(window.location.origin)
-    setCopiedApp(true)
-    setTimeout(() => setCopiedApp(false), 2500)
+    setCopiedApp(true); setTimeout(() => setCopiedApp(false), 2500)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-5 sm:pb-0"
-      style={{ background: 'rgba(0,0,0,0.42)' }} onClick={onClose}>
-      <div className="w-full max-w-sm surface p-5" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-base" style={{ color: '#111' }}>Compartir</h3>
-          <button onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-lg leading-none"
-            style={{ background: 'rgba(0,0,0,0.07)', color: '#666' }}>
-            ×
-          </button>
-        </div>
-
-        {/* Share account (same album) */}
-        <div className="rounded-xl p-4 mb-3" style={{ background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)' }}>
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(124,58,237,0.09)', fontSize: 16 }}>
-              👥
-            </div>
-            <div>
-              <p className="font-semibold text-sm" style={{ color: '#111' }}>Compartir álbum</p>
-              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#888' }}>
-                Para llenar el mismo álbum juntos (hermano, pareja…)
-              </p>
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>👥</div>
+          <div>
+            <p style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>Compartir álbum</p>
+            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para llenar el mismo álbum juntos (hermano, pareja…)</p>
           </div>
-          <button onClick={handleShareAccount} disabled={loadingToken}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-            style={{ background: copiedAccount ? C.emerald : loadingToken ? '#c4b5fd' : C.purple }}>
-            {copiedAccount ? 'Link copiado' : loadingToken ? 'Generando…' : 'Copiar link de invitación'}
-          </button>
         </div>
-
-        {/* Share app (separate album) */}
-        <div className="rounded-xl p-4" style={{ background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)' }}>
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(22,163,74,0.09)', fontSize: 16 }}>
-              📲
-            </div>
-            <div>
-              <p className="font-semibold text-sm" style={{ color: '#111' }}>Recomendar app</p>
-              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#888' }}>
-                Para que alguien lleve su propio álbum por separado
-              </p>
-            </div>
+        <button onClick={handleShareAccount} disabled={loadingToken} style={{ width: '100%', padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#fff', background: copiedAccount ? C.emerald : loadingToken ? '#c4b5fd' : C.purple, border: 'none', cursor: 'pointer' }}>
+          {copiedAccount ? 'Link copiado' : loadingToken ? 'Generando…' : 'Copiar link de invitación'}
+        </button>
+      </div>
+      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(22,163,74,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>📲</div>
+          <div>
+            <p style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>Recomendar app</p>
+            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para que alguien lleve su propio álbum por separado</p>
           </div>
-          <button onClick={handleShareApp}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ background: copiedApp ? C.emerald : 'rgba(0,0,0,0.07)',
-                     color:      copiedApp ? '#fff'     : '#444' }}>
-            {copiedApp ? 'Link copiado' : 'Copiar link de la app'}
-          </button>
         </div>
+        <button onClick={handleShareApp} style={{ width: '100%', padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: copiedApp ? C.emerald : 'rgba(0,0,0,0.07)', color: copiedApp ? '#fff' : '#444', border: 'none', cursor: 'pointer' }}>
+          {copiedApp ? 'Link copiado' : 'Copiar link de la app'}
+        </button>
       </div>
     </div>
   )
 }
 
-// ─── Coca-Cola first-open modal ───────────────────────────────────────────────
+// ─── Panel: Shift ─────────────────────────────────────────────────────────────
+function ShiftContent() {
+  const services = ['IA & Automatización', 'Datos & Analytics', 'Desarrollo de Software', 'Ciberseguridad', 'Machine Learning']
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <p style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#111', lineHeight: 1 }}>Shift.</p>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>AI · Data · Software · CDMX</p>
+      </div>
+      <p style={{ fontSize: 13, color: '#555', lineHeight: 1.65 }}>
+        Studio especializado en inteligencia artificial, datos y desarrollo de software para empresas que necesitan eficiencia operativa y tecnología que realmente escala.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {[{ val: '30+', label: 'Proyectos entregados' }, { val: '8', label: 'Industrias' }, { val: '340h', label: 'Horas ahorradas/mes' }, { val: '87%', label: 'Eficiencia promedio' }].map(({ val, label }) => (
+          <div key={label} style={{ background: '#f6f6f8', borderRadius: 12, padding: '12px 14px' }}>
+            <p style={{ fontSize: 22, fontWeight: 900, color: '#111', lineHeight: 1 }}>{val}</p>
+            <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
+          </div>
+        ))}
+      </div>
+      <div>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#ccc', textTransform: 'uppercase', marginBottom: 8 }}>Servicios</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {services.map(s => (
+            <span key={s} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: 'rgba(124,58,237,0.07)', color: C.purple, fontWeight: 600 }}>{s}</span>
+          ))}
+        </div>
+      </div>
+      <a href="https://wa.me/525510807509?text=Hola%20Shift%2C%20me%20interesa%20agendar%20una%20consulta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+        <button style={{ width: '100%', padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
+          Agendar consulta gratis
+        </button>
+      </a>
+      <div style={{ textAlign: 'center' }}>
+        <a href="tel:5510807509" style={{ fontSize: 12, color: '#bbb', textDecoration: 'none' }}>55 1080 7509</a>
+      </div>
+    </div>
+  )
+}
+
+// ─── Side panel ───────────────────────────────────────────────────────────────
+function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned }) {
+  const titles = { exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
+  return (
+    <>
+      <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} onClick={onClose}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 440, background: '#fff', display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.26s ease-out', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
+            <h2 style={{ fontWeight: 800, fontSize: 18, color: '#111', margin: 0 }}>{titles[page]}</h2>
+            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          </div>
+          <div style={{ flex: 1, padding: 20 }}>
+            {page === 'exportar'  && <ExportarContent allStickers={allStickers} owned={owned} />}
+            {page === 'compartir' && <CompartirContent user={user} albumOwnerId={albumOwnerId} />}
+            {page === 'shift'     && <ShiftContent />}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Hamburger menu ───────────────────────────────────────────────────────────
+function HamburgerMenu({ onOpen }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    function close(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+  const items = [
+    { id: 'exportar',  label: 'Exportar',  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
+    { id: 'compartir', label: 'Compartir', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
+    { id: 'shift',     label: 'Shift',     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
+  ]
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{ width: 36, height: 36, borderRadius: 10, background: open ? 'rgba(0,0,0,0.11)' : 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        {[0,1,2].map(i => <div key={i} style={{ width: 14, height: 1.5, background: '#555', borderRadius: 1 }} />)}
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 170, zIndex: 40 }}>
+          {items.map((item, i) => (
+            <button key={item.id} onClick={() => { setOpen(false); onOpen(item.id) }}
+              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', fontSize: 13, fontWeight: 600, color: '#333', cursor: 'pointer' }}
+              onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'}
+              onMouseOut={e  => e.currentTarget.style.background = 'transparent'}>
+              {item.icon}{item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Coca-Cola modal ──────────────────────────────────────────────────────────
 function CocaModal({ onChoice }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-5"
-      style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="w-full max-w-sm p-6 surface">
-        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: '#999' }}>
-          Sección especial
-        </p>
-        <h2 className="font-bold text-xl mb-2 leading-snug" style={{ color: '#111' }}>
-          ¿Tu álbum incluye la sección Coca-Cola?
-        </h2>
-        <p className="text-sm leading-relaxed mb-6" style={{ color: '#666' }}>
-          Esta sección especial (CC-1 a CC-14) viene en versiones regionales del álbum y contiene estampas exclusivas de jugadores estrella, distribuidas dentro de productos Coca-Cola.
-        </p>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => onChoice(true)}
-            className="w-full py-3 rounded-xl font-semibold text-sm transition-colors text-white"
-            style={{ background: C.purple }}
-            onMouseOver={e => e.currentTarget.style.background = '#6d28d9'}
-            onMouseOut={e  => e.currentTarget.style.background = C.purple}>
-            Sí, mi álbum la incluye
-          </button>
-          <button onClick={() => onChoice(false)}
-            className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
-            style={{ background: 'rgba(0,0,0,0.05)', color: '#666' }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
-            onMouseOut={e  => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}>
-            No, mi álbum no la tiene
-          </button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.5)' }}>
+      <div className="surface" style={{ width: '100%', maxWidth: 340, padding: 24 }}>
+        <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, color: '#999', marginBottom: 4 }}>Sección especial</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, color: '#111', marginBottom: 8, lineHeight: 1.3 }}>¿Tu álbum incluye la sección Coca-Cola?</h2>
+        <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 24 }}>Esta sección especial (CC-1 a CC-14) viene en versiones regionales del álbum con estampas exclusivas.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={() => onChoice(true)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>Sí, mi álbum la incluye</button>
+          <button onClick={() => onChoice(false)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: '#666', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer' }}>No, mi álbum no la tiene</button>
         </div>
       </div>
     </div>
@@ -327,100 +475,64 @@ function CocaModal({ onChoice }) {
 function StickerTile({ sticker, owned, onMouseDown, onMouseEnter }) {
   const isOwned = owned.has(sticker.id)
   let bg, text, outline
-  if (isOwned && sticker.isRare) {
-    bg = C.gold; text = '#fff'; outline = 'none'
-  } else if (isOwned) {
-    bg = C.emerald; text = '#fff'; outline = 'none'
-  } else if (sticker.isRare) {
-    bg = '#fef3c7'; text = '#b45309'; outline = '1px solid #fde68a'
-  } else {
-    bg = 'rgba(0,0,0,0.06)'; text = '#aaa'; outline = 'none'
-  }
-
+  if (isOwned && sticker.isRare)   { bg = C.gold;                text = '#fff';    outline = 'none' }
+  else if (isOwned)                { bg = C.emerald;             text = '#fff';    outline = 'none' }
+  else if (sticker.isRare)         { bg = '#fef3c7';             text = '#b45309'; outline = '1px solid #fde68a' }
+  else                             { bg = 'rgba(0,0,0,0.06)';   text = '#aaa';    outline = 'none' }
   return (
-    <div
-      onMouseDown={() => onMouseDown(sticker.id)}
-      onMouseEnter={() => onMouseEnter(sticker.id)}
+    <div onMouseDown={() => onMouseDown(sticker.id)} onMouseEnter={() => onMouseEnter(sticker.id)}
       title={`${sticker.id} — ${sticker.label}${sticker.isRare ? ' · RARA' : ''}`}
-      style={{ background: bg, color: text, cursor: 'pointer', borderRadius: 6, outline,
-               display: 'flex', flexDirection: 'column', alignItems: 'center',
-               justifyContent: 'center', aspectRatio: '1', transition: 'transform 0.05s' }}
+      style={{ background: bg, color: text, cursor: 'pointer', borderRadius: 6, outline, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', transition: 'transform 0.05s' }}
       onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.zIndex = 10 }}
-      onMouseOut={e  => { e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = '' }}
-    >
-      <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.06em', opacity: 0.65, lineHeight: 1 }}>
-        {sticker.id.split('-')[0]}
-      </span>
-      <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, marginTop: 1 }}>
-        {sticker.num}
-      </span>
+      onMouseOut={e  => { e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = '' }}>
+      <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.06em', opacity: 0.65, lineHeight: 1 }}>{sticker.id.split('-')[0]}</span>
+      <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, marginTop: 1 }}>{sticker.num}</span>
     </div>
   )
 }
 
-// ─── Sticker grid ─────────────────────────────────────────────────────────────
 function StickerGrid({ stickers, owned, onMouseDown, onMouseEnter }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
-      {stickers.map(s => (
-        <StickerTile key={s.id} sticker={s} owned={owned}
-          onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} />
-      ))}
+      {stickers.map(s => <StickerTile key={s.id} sticker={s} owned={owned} onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} />)}
     </div>
   )
 }
 
 // ─── Desktop sidebar nav ──────────────────────────────────────────────────────
 function SectionNav({ allStickers, owned, active, onSelect, hasCoca }) {
+  const groups = ['A','B','C','D','E','F','G','H','I','J','K','L']
+  function NavItem({ id, label, count, total }) {
+    const isActive = active === id
+    const full = total > 0 && count === total
+    return (
+      <button onClick={() => onSelect(id)}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10, background: isActive ? 'rgba(124,58,237,0.09)' : 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.1s' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', width: 36, flexShrink: 0, color: isActive ? C.purple : '#888' }}>{id === 'all' ? 'ALL' : id}</span>
+        <span style={{ flex: 1, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isActive ? '#111' : '#555', fontWeight: isActive ? 600 : 400 }}>{label}</span>
+        {total > 0 && <span style={{ fontSize: 10, fontVariantNumeric: 'tabular-nums', flexShrink: 0, color: full ? C.emerald : '#bbb', fontWeight: full ? 700 : 400 }}>{count}/{total}</span>}
+      </button>
+    )
+  }
   const allCount = allStickers.filter(s => owned.has(s.id)).length
   const fwcCount = allStickers.filter(s => s.section === 'FWC' && owned.has(s.id)).length
   const fwcTotal = allStickers.filter(s => s.section === 'FWC').length
   const ccCount  = allStickers.filter(s => s.section === 'CC'  && owned.has(s.id)).length
-  const groups   = ['A','B','C','D','E','F','G','H','I','J','K','L']
-
-  function NavItem({ id, label, count, total }) {
-    const isActive = active === id
-    const full     = total > 0 && count === total
-    return (
-      <button onClick={() => onSelect(id)}
-        className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 transition-colors"
-        style={{ background: isActive ? 'rgba(124,58,237,0.09)' : 'transparent' }}>
-        <span className="text-[11px] font-bold font-mono w-9 flex-shrink-0"
-          style={{ color: isActive ? C.purple : '#888' }}>
-          {id === 'all' ? 'ALL' : id}
-        </span>
-        <span className="flex-1 text-[11px] truncate"
-          style={{ color: isActive ? '#111' : '#555', fontWeight: isActive ? 600 : 400 }}>
-          {label}
-        </span>
-        {total > 0 && (
-          <span className="text-[10px] tabular-nums flex-shrink-0"
-            style={{ color: full ? C.emerald : '#bbb', fontWeight: full ? 700 : 400 }}>
-            {count}/{total}
-          </span>
-        )}
-      </button>
-    )
-  }
-
   return (
-    <nav className="space-y-0.5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+    <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', maxHeight: 'calc(100vh - 8rem)' }}>
       <NavItem id="all" label="Todo el álbum" count={allCount} total={allStickers.length} />
       <NavItem id="FWC" label="Especiales FWC" count={fwcCount} total={fwcTotal} />
       {hasCoca && <NavItem id="CC" label="Coca-Cola" count={ccCount} total={14} />}
-      <div className="my-2" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }} />
+      <div style={{ margin: '6px 0', borderTop: '1px solid rgba(0,0,0,0.07)' }} />
       {groups.map(g => {
-        const teamsInGroup = TEAM_LIST.filter(t => t.group === g)
+        const teams = TEAM_LIST.filter(t => t.group === g)
         return (
           <div key={g}>
-            <p className="px-3 py-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: '#bbb' }}>
-              Grupo {g}
-            </p>
-            {teamsInGroup.map(team => {
-              const teamStickers = allStickers.filter(s => s.section === team.code)
-              const have = teamStickers.filter(s => owned.has(s.id)).length
-              return <NavItem key={team.code} id={team.code} label={team.name}
-                count={have} total={teamStickers.length} />
+            <p style={{ padding: '4px 12px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb' }}>Grupo {g}</p>
+            {teams.map(team => {
+              const ts = allStickers.filter(s => s.section === team.code)
+              const h  = ts.filter(s => owned.has(s.id)).length
+              return <NavItem key={team.code} id={team.code} label={team.name} count={h} total={ts.length} />
             })}
           </div>
         )
@@ -429,12 +541,12 @@ function SectionNav({ allStickers, owned, active, onSelect, hasCoca }) {
   )
 }
 
-// ─── Tab: Álbum ───────────────────────────────────────────────────────────────
-function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, onToggleCoca }) {
+// ─── Album tab ────────────────────────────────────────────────────────────────
+function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, onToggleCoca, onRareFound }) {
   const [activeSection, setActiveSection] = useState('all')
-  const [bulkInput, setBulkInput]         = useState('')
-  const [bulkMode,  setBulkMode]          = useState('add')
-  const [feedback,  setFeedback]          = useState('')
+  const [bulkInput, setBulkInput] = useState('')
+  const [bulkMode,  setBulkMode]  = useState('add')
+  const [feedback,  setFeedback]  = useState('')
   const dragging   = useRef(false)
   const dragAction = useRef(null)
 
@@ -442,18 +554,18 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
     activeSection === 'all' ? allStickers : allStickers.filter(s => s.section === activeSection),
     [activeSection, allStickers]
   )
-  const have  = visibleStickers.filter(s => owned.has(s.id)).length
+  const have = visibleStickers.filter(s => owned.has(s.id)).length
   const total = visibleStickers.length
   const pct   = total ? Math.round((have / total) * 100) : 0
-  const activeSec    = SECTIONS.find(s => s.id === activeSection)
-  const isCC         = activeSection === 'CC'
-  const accentColor  = isCC ? C.red : C.purple
+  const activeSec   = SECTIONS.find(s => s.id === activeSection)
+  const isCC        = activeSection === 'CC'
+  const accentColor = isCC ? C.red : C.purple
 
   function flash(msg) { setFeedback(msg); setTimeout(() => setFeedback(''), 2500) }
 
   function applyBulk() {
     if (!bulkInput.trim()) return
-    const ids   = parseRangeInput(bulkInput)
+    const ids = parseRangeInput(bulkInput)
     const valid = [...ids]
     if (!valid.length) { flash('Formato: MEX 1-15, ARG 3 5 o CC 1-14'); return }
     bulkMode === 'add' ? addMany(valid) : removeMany(valid)
@@ -467,15 +579,24 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
     flash(`${ids.length} estampas ${val ? 'marcadas' : 'desmarcadas'}`)
   }
 
-  function onMouseDown(id) {
-    dragging.current   = true
-    dragAction.current = owned.has(id) ? 'remove' : 'add'
+  function handleMouseDown(id) {
+    const wasOwned = owned.has(id)
+    dragging.current = true
+    dragAction.current = wasOwned ? 'remove' : 'add'
     toggle(id)
+    if (!wasOwned) {
+      const s = allStickers.find(s => s.id === id)
+      if (s?.isRare) onRareFound(s)
+    }
   }
-  function onMouseEnter(id) {
+  function handleMouseEnter(id) {
     if (!dragging.current) return
-    if (dragAction.current === 'add'    && !owned.has(id)) toggle(id)
-    if (dragAction.current === 'remove' &&  owned.has(id)) toggle(id)
+    if (dragAction.current === 'add' && !owned.has(id)) {
+      toggle(id)
+      const s = allStickers.find(s => s.id === id)
+      if (s?.isRare) onRareFound(s)
+    }
+    if (dragAction.current === 'remove' && owned.has(id)) toggle(id)
   }
   function stopDrag() { dragging.current = false; dragAction.current = null }
 
@@ -488,11 +609,9 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
 
   return (
     <div className="lg:flex lg:gap-5">
-      {/* Desktop sidebar */}
       <aside className="hidden lg:block lg:w-52 xl:w-60 flex-shrink-0">
         <div className="surface p-2 sticky top-24" style={{ background: '#fafafa' }}>
-          <SectionNav allStickers={allStickers} owned={owned}
-            active={activeSection} onSelect={setActiveSection} hasCoca={hasCoca} />
+          <SectionNav allStickers={allStickers} owned={owned} active={activeSection} onSelect={setActiveSection} hasCoca={hasCoca} />
         </div>
       </aside>
 
@@ -501,33 +620,24 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
         <div className="lg:hidden flex gap-1.5 overflow-x-auto pb-2">
           {[{ id: 'all', label: 'Todo' }, { id: 'FWC', label: 'FWC' }].map(({ id, label }) => (
             <button key={id} onClick={() => setActiveSection(id)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-              style={{ background: activeSection === id ? C.purple : 'rgba(0,0,0,0.07)',
-                       color:      activeSection === id ? '#fff'    : '#555' }}>
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: activeSection === id ? C.purple : 'rgba(0,0,0,0.07)', color: activeSection === id ? '#fff' : '#555', border: 'none', cursor: 'pointer' }}>
               {label}
             </button>
           ))}
           {hasCoca && (
             <button onClick={() => setActiveSection('CC')}
-              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-              style={{ background: activeSection === 'CC' ? C.red : 'rgba(229,57,53,0.1)',
-                       color:      activeSection === 'CC' ? '#fff' : C.red }}>
-              CC
-            </button>
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: activeSection === 'CC' ? C.red : 'rgba(229,57,53,0.1)', color: activeSection === 'CC' ? '#fff' : C.red, border: 'none', cursor: 'pointer' }}>CC</button>
           )}
           <div className="flex-shrink-0 w-px mx-0.5" style={{ background: 'rgba(0,0,0,0.1)' }} />
           {TEAM_LIST.map(team => {
-            const h        = allStickers.filter(s => s.section === team.code && owned.has(s.id)).length
+            const h = allStickers.filter(s => s.section === team.code && owned.has(s.id)).length
             const complete = h === 20
             return (
               <button key={team.code} onClick={() => setActiveSection(team.code)}
-                className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono transition-colors"
-                style={{
-                  background: activeSection === team.code ? C.purple
-                    : complete ? 'rgba(22,163,74,0.12)' : 'rgba(0,0,0,0.07)',
-                  color: activeSection === team.code ? '#fff'
-                    : complete ? C.emerald : '#555',
-                }}>
+                className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono"
+                style={{ background: activeSection === team.code ? C.purple : complete ? 'rgba(22,163,74,0.12)' : 'rgba(0,0,0,0.07)', color: activeSection === team.code ? '#fff' : complete ? C.emerald : '#555', border: 'none', cursor: 'pointer' }}>
                 {team.code}
               </button>
             )
@@ -538,103 +648,63 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
         <div className="surface p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-bold text-base" style={{ color: '#111' }}>
-                {activeSec?.name || activeSection}
-              </h2>
-              <p className="text-sm mt-0.5" style={{ color: '#777' }}>
-                {have} de {total}&ensp;·&ensp;
-                <span style={{ color: accentColor, fontWeight: 700 }}>{pct}%</span>
-              </p>
+              <h2 className="font-bold text-base" style={{ color: '#111' }}>{activeSec?.name || activeSection}</h2>
+              <p className="text-sm mt-0.5" style={{ color: '#777' }}>{have} de {total}&ensp;·&ensp;<span style={{ color: accentColor, fontWeight: 700 }}>{pct}%</span></p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => markSection(true)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                style={{ background: 'rgba(22,163,74,0.1)', color: '#15803d' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
-                onMouseOut={e  => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}>
-                Marcar todas
-              </button>
-              <button onClick={() => markSection(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                style={{ background: 'rgba(0,0,0,0.06)', color: '#666' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'}
-                onMouseOut={e  => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}>
-                Limpiar
-              </button>
+              <button onClick={() => markSection(true)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(22,163,74,0.1)', color: '#15803d', border: 'none', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}>Marcar todas</button>
+              <button onClick={() => markSection(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.06)', color: '#666', border: 'none', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}>Limpiar</button>
             </div>
           </div>
           <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-            <div className="h-1.5 rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, background: accentColor }} />
+            <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: accentColor }} />
           </div>
         </div>
 
         {/* Bulk input */}
         <div className="surface p-4">
-          <p className="text-[10px] uppercase tracking-widest font-bold mb-2.5" style={{ color: '#aaa' }}>
-            Entrada rápida
-          </p>
+          <p className="text-[10px] uppercase tracking-widest font-bold mb-2.5" style={{ color: '#aaa' }}>Entrada rápida</p>
           <div className="space-y-2">
-            <input
-              value={bulkInput}
-              onChange={e => setBulkInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && applyBulk()}
+            <input value={bulkInput} onChange={e => setBulkInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyBulk()}
               placeholder={hasCoca ? 'MEX 1-15,  ARG 3 5,  CC 1-14' : 'MEX 1-15,  ARG 3 5 10-18,  FWC 1-8'}
               className="w-full text-sm outline-none transition-colors rounded-xl px-4 py-2.5"
               style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111' }}
               onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.45)'}
-              onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
-            />
+              onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
             <div className="flex gap-2">
-              <select value={bulkMode} onChange={e => setBulkMode(e.target.value)}
-                className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
-                style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#444' }}>
+              <select value={bulkMode} onChange={e => setBulkMode(e.target.value)} className="flex-1 rounded-xl px-3 py-2 text-sm outline-none" style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#444' }}>
                 <option value="add">Marcar</option>
                 <option value="remove">Desmarcar</option>
               </select>
-              <button onClick={applyBulk}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
-                style={{ background: C.purple }}
-                onMouseOver={e => e.currentTarget.style.background = '#6d28d9'}
-                onMouseOut={e  => e.currentTarget.style.background = C.purple}>
-                Aplicar
-              </button>
+              <button onClick={applyBulk} className="flex-1 py-2 rounded-xl text-sm font-semibold text-white" style={{ background: C.purple, border: 'none', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = '#6d28d9'} onMouseOut={e => e.currentTarget.style.background = C.purple}>Aplicar</button>
             </div>
           </div>
           {feedback
             ? <p className="text-xs mt-2 font-semibold" style={{ color: C.purple }}>{feedback}</p>
-            : <p className="text-xs mt-2" style={{ color: '#bbb' }}>
-                Arrastra el mouse sobre el tablero para marcar varias de un jalón
-              </p>
-          }
+            : <p className="text-xs mt-2" style={{ color: '#bbb' }}>Arrastra sobre el tablero para marcar varias de un jalón</p>}
         </div>
 
         {/* Coca-Cola toggle */}
-        <button onClick={onToggleCoca}
-          className="w-full text-left surface-sm px-4 py-3 flex items-center justify-between"
-          onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'}
-          onMouseOut={e  => e.currentTarget.style.background = '#fff'}>
+        <button onClick={onToggleCoca} className="w-full text-left surface-sm px-4 py-3 flex items-center justify-between"
+          style={{ border: 'none', cursor: 'pointer' }}
+          onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'} onMouseOut={e => e.currentTarget.style.background = '#fff'}>
           <div>
             <p className="text-xs font-semibold" style={{ color: '#333' }}>Sección Coca-Cola (CC-1 a CC-14)</p>
-            <p className="text-xs mt-0.5" style={{ color: '#aaa' }}>
-              {hasCoca ? 'Incluida en tu álbum — toca para desactivar' : 'No incluida — toca para activar'}
-            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#aaa' }}>{hasCoca ? 'Incluida — toca para desactivar' : 'No incluida — toca para activar'}</p>
           </div>
-          <div className="w-10 h-5 rounded-full relative flex-shrink-0 ml-4 transition-colors"
-            style={{ background: hasCoca ? C.red : 'rgba(0,0,0,0.15)' }}>
-            <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
-              style={{ left: hasCoca ? '22px' : '2px' }} />
+          <div className="w-10 h-5 rounded-full relative flex-shrink-0 ml-4" style={{ background: hasCoca ? C.red : 'rgba(0,0,0,0.15)' }}>
+            <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow" style={{ left: hasCoca ? '22px' : '2px', transition: 'left 0.2s' }} />
           </div>
         </button>
 
         {/* Sticker grid */}
         <div className="surface p-4 select-none" onMouseUp={stopDrag} onMouseLeave={stopDrag}>
           {isCC && (
-            <div className="mb-3 px-3 py-2 rounded-xl"
-              style={{ background: 'rgba(229,57,53,0.07)', border: '1px solid rgba(229,57,53,0.2)' }}>
-              <p className="text-xs font-medium" style={{ color: C.red }}>
-                Estampas exclusivas Coca-Cola — disponibles solo dentro de productos participantes
-              </p>
+            <div className="mb-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(229,57,53,0.07)', border: '1px solid rgba(229,57,53,0.2)' }}>
+              <p className="text-xs font-medium" style={{ color: C.red }}>Estampas exclusivas Coca-Cola — disponibles solo en productos participantes</p>
             </div>
           )}
           {grouped ? (
@@ -651,34 +721,22 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
                       <span className="text-xs font-bold font-mono tracking-wider" style={{ color: '#444' }}>{code}</span>
                       <span className="text-xs" style={{ color: '#aaa' }}>{sec?.name || team?.name}</span>
                       <div className="flex-1 rounded-full h-1 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-                        <div className="h-1 rounded-full transition-all duration-300"
-                          style={{ width: `${pctS}%`, background: pctS === 100 ? C.emerald : sIsCC ? C.red : C.purple }} />
+                        <div className="h-1 rounded-full" style={{ width: `${pctS}%`, background: pctS === 100 ? C.emerald : sIsCC ? C.red : C.purple, transition: 'width 0.3s' }} />
                       </div>
-                      <span className="text-xs tabular-nums"
-                        style={{ color: pctS === 100 ? C.emerald : '#bbb', fontWeight: pctS === 100 ? 700 : 400 }}>
-                        {h}/{stickers.length}
-                      </span>
+                      <span className="text-xs tabular-nums" style={{ color: pctS === 100 ? C.emerald : '#bbb', fontWeight: pctS === 100 ? 700 : 400 }}>{h}/{stickers.length}</span>
                     </div>
-                    <StickerGrid stickers={stickers} owned={owned}
-                      onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} />
+                    <StickerGrid stickers={stickers} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
                   </div>
                 )
               })}
             </div>
           ) : (
-            <StickerGrid stickers={visibleStickers} owned={owned}
-              onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} />
+            <StickerGrid stickers={visibleStickers} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
           )}
-
           <div className="flex items-center gap-5 mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-            {[
-              { bg: C.emerald,           label: 'Tengo' },
-              { bg: 'rgba(0,0,0,0.08)',  label: 'Falta' },
-              { bg: C.gold,              label: 'Rara'  },
-            ].map(({ bg, label }) => (
+            {[{ bg: C.emerald, label: 'Tengo' }, { bg: 'rgba(0,0,0,0.08)', label: 'Falta' }, { bg: C.gold, label: 'Rara' }].map(({ bg, label }) => (
               <span key={label} className="flex items-center gap-1.5 text-xs" style={{ color: '#888' }}>
-                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: bg }} />
-                {label}
+                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: bg }} />{label}
               </span>
             ))}
           </div>
@@ -688,290 +746,28 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
   )
 }
 
-// ─── Tab: Faltan ──────────────────────────────────────────────────────────────
-function FaltanTab({ allStickers, owned }) {
-  const [filterGroup, setFilterGroup] = useState('all')
-  const missing = allStickers.filter(s => !owned.has(s.id))
-  const groups  = ['all', 'FWC', 'CC', 'A','B','C','D','E','F','G','H','I','J','K','L']
-
-  const sections = filterGroup === 'all'
-    ? ['FWC', ...(allStickers.find(s => s.section === 'CC') ? ['CC'] : []), ...TEAM_LIST.map(t => t.code)]
-    : filterGroup === 'FWC' ? ['FWC']
-    : filterGroup === 'CC'  ? ['CC']
-    : TEAM_LIST.filter(t => t.group === filterGroup).map(t => t.code)
-
-  return (
-    <div className="space-y-3">
-      <div className="surface p-5 flex items-center justify-between">
-        <div>
-          <p className="font-black text-4xl tabular-nums" style={{ color: '#111' }}>{missing.length}</p>
-          <p className="text-sm mt-1" style={{ color: '#888' }}>
-            estampas faltantes&ensp;·&ensp;{allStickers.filter(s => owned.has(s.id)).length} de {allStickers.length} conseguidas
-          </p>
-        </div>
-      </div>
-
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {groups.map(g => {
-          const cnt = g === 'all' ? missing.length
-            : g === 'FWC' ? missing.filter(s => s.section === 'FWC').length
-            : g === 'CC'  ? missing.filter(s => s.section === 'CC').length
-            : missing.filter(s => TEAM_LIST.find(t => t.code === s.section)?.group === g).length
-          if (g === 'CC' && !allStickers.find(s => s.section === 'CC')) return null
-          return (
-            <button key={g} onClick={() => setFilterGroup(g)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold"
-              style={{ background: filterGroup === g ? C.purple : 'rgba(0,0,0,0.07)',
-                       color:      filterGroup === g ? '#fff'    : '#555' }}>
-              {g === 'all' ? 'Todo' : g === 'FWC' ? 'FWC' : g === 'CC' ? 'CC' : `Grupo ${g}`}
-              <span className="ml-1 opacity-60">({cnt})</span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="space-y-2">
-        {sections.map(code => {
-          const team        = TEAM_LIST.find(t => t.code === code)
-          const sec         = SECTIONS.find(s => s.id === code)
-          const sectionMiss = missing.filter(s => s.section === code)
-          if (!sectionMiss.length) return null
-          return (
-            <div key={code} className="surface p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="font-bold font-mono text-sm" style={{ color: '#222' }}>{code}</span>
-                  <span className="text-sm" style={{ color: '#aaa' }}>{sec?.name || team?.name}</span>
-                </div>
-                <span className="text-xs tabular-nums" style={{ color: '#aaa' }}>
-                  {sectionMiss.length} {sectionMiss.length === 1 ? 'falta' : 'faltan'}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {sectionMiss.map(s => (
-                  <span key={s.id} className="px-2 py-0.5 rounded text-xs font-mono font-bold"
-                    style={s.isRare
-                      ? { background: '#fef3c7', color: '#b45309', outline: '1px solid #fde68a' }
-                      : { background: 'rgba(0,0,0,0.06)', color: '#888' }}>
-                    {s.id}{s.isRare ? ' R' : ''}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-        {!sections.some(code => missing.find(s => s.section === code)) && (
-          <div className="surface p-12 text-center">
-            <p className="font-bold text-lg" style={{ color: '#111' }}>Sección completa</p>
-            <p className="text-sm mt-1" style={{ color: '#aaa' }}>No te falta ninguna estampa aquí</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Tab: Raras ───────────────────────────────────────────────────────────────
-function RarasTab({ allStickers, owned }) {
-  const rareStickers = allStickers.filter(s => s.isRare)
-  const have = rareStickers.filter(s => owned.has(s.id)).length
-  const pct  = rareStickers.length ? Math.round((have / rareStickers.length) * 100) : 0
-
-  return (
-    <div className="space-y-3">
-      <div className="surface p-5">
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: '#aaa' }}>
-              Estampas raras
-            </p>
-            <p className="font-bold text-base" style={{ color: '#111' }}>
-              {have} de {rareStickers.length} conseguidas
-            </p>
-          </div>
-          <span className="text-3xl font-black tabular-nums" style={{ color: C.gold }}>{pct}%</span>
-        </div>
-        <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-          <div className="h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${pct}%`, background: C.gold }} />
-        </div>
-        <p className="text-xs mt-3 leading-relaxed" style={{ color: '#aaa' }}>
-          Aprox. 1 estampa rara por cada 8 sobres. Las FWC especiales aparecen 1 vez cada 100 sobres.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        {rareStickers.map(s => {
-          const isOwned = owned.has(s.id)
-          const team    = TEAM_LIST.find(t => t.code === s.teamCode)
-          const isCC    = s.section === 'CC'
-          return (
-            <div key={s.id} className="surface p-4"
-              style={isOwned ? { outline: '2px solid rgba(217,119,6,0.3)' } : {}}>
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0"
-                  style={{ background: isOwned ? C.gold : isCC ? 'rgba(229,57,53,0.1)' : '#fef3c7',
-                           color:      isOwned ? '#fff'  : isCC ? C.red               : '#b45309' }}>
-                  <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.06em', opacity: 0.7 }}>
-                    {s.id.split('-')[0]}
-                  </span>
-                  <span style={{ fontSize: 17, fontWeight: 900, lineHeight: 1 }}>{s.num}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm" style={{ color: '#111' }}>{s.label}</span>
-                    {team && <span className="text-xs font-mono" style={{ color: '#bbb' }}>{team.code}</span>}
-                    {isCC && <span className="text-xs font-semibold" style={{ color: C.red }}>Coca-Cola</span>}
-                  </div>
-                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#b45309' }}>{s.rareReason}</p>
-                </div>
-                <span className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold"
-                  style={isOwned
-                    ? { background: 'rgba(22,163,74,0.12)', color: C.emerald, outline: '1px solid rgba(22,163,74,0.25)' }
-                    : { background: 'rgba(0,0,0,0.05)', color: '#aaa' }}>
-                  {isOwned ? 'Tengo' : 'Falta'}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ─── Tab: Exportar ────────────────────────────────────────────────────────────
-function ExportarTab({ allStickers, owned }) {
-  const [copied, setCopied] = useState('')
-  const missing = allStickers.filter(s => !owned.has(s.id))
-  const pct     = Math.round((allStickers.filter(s => owned.has(s.id)).length / allStickers.length) * 100)
-
-  function buildText(format) {
-    const header = `Me faltan ${missing.length} estampas del álbum Panini FIFA Mundial 2026 (${pct}% completado)\n\n`
-    if (format === 'ranges') {
-      const byTeam = {}
-      missing.forEach(s => { if (!byTeam[s.section]) byTeam[s.section] = []; byTeam[s.section].push(s.num) })
-      const order = ['FWC', 'CC', ...TEAM_LIST.map(t => t.code)]
-      const lines = order.filter(c => byTeam[c]).map(c => {
-        const nums   = [...new Set(byTeam[c])].sort((a, b) => a - b)
-        const ranges = []; let st = nums[0], en = nums[0]
-        for (let i = 1; i < nums.length; i++) {
-          if (nums[i] === en + 1) { en = nums[i] } else { ranges.push(st === en ? `${st}` : `${st}-${en}`); st = en = nums[i] }
-        }
-        ranges.push(st === en ? `${st}` : `${st}-${en}`)
-        return `${c}: ${ranges.join(', ')}`
-      })
-      return header + lines.join('\n')
-    }
-    if (format === 'bygroup') {
-      const ccLines = missing.filter(s => s.section === 'CC').length
-        ? `CC (Coca-Cola): ${missing.filter(s => s.section === 'CC').map(s => s.id).join(', ')}\n\n`
-        : ''
-      const lines = ['A','B','C','D','E','F','G','H','I','J','K','L'].map(g => {
-        const teams  = TEAM_LIST.filter(t => t.group === g)
-        const tLines = teams.map(t => {
-          const tm = missing.filter(s => s.section === t.code)
-          if (!tm.length) return `  ${t.code}: completo`
-          const nums   = tm.map(s => s.num).sort((a, b) => a - b)
-          const ranges = []; let st = nums[0], en = nums[0]
-          for (let i = 1; i < nums.length; i++) {
-            if (nums[i] === en + 1) { en = nums[i] } else { ranges.push(st === en ? `${st}` : `${st}-${en}`); st = en = nums[i] }
-          }
-          ranges.push(st === en ? `${st}` : `${st}-${en}`)
-          return `  ${t.code}: ${ranges.join(', ')}`
-        }).join('\n')
-        return `Grupo ${g}:\n${tLines}`
-      }).join('\n\n')
-      return header + ccLines + lines
-    }
-    if (format === 'rare') {
-      const miss = allStickers.filter(s => s.isRare && !owned.has(s.id))
-      if (!miss.length) return 'Ya tengo todas las estampas raras del álbum 2026.'
-      return `Me faltan ${miss.length} estampas raras:\n\n` +
-        miss.map(s => `${s.id} — ${s.label}`).join('\n') +
-        '\n\nTienes alguna para cambio?'
-    }
-  }
-
-  async function copy(format) {
-    await navigator.clipboard.writeText(buildText(format))
-    setCopied(format); setTimeout(() => setCopied(''), 2000)
-  }
-  function whatsapp(format) {
-    window.open(`https://wa.me/?text=${encodeURIComponent(buildText(format))}`, '_blank')
-  }
-
-  const formats = [
-    { id: 'ranges',  title: 'Por código y rango', desc: 'Compacto — MEX: 3-7, 12 · ARG: 5, 18' },
-    { id: 'bygroup', title: 'Por grupo A–L',       desc: 'Organizado por grupo del torneo' },
-    { id: 'rare',    title: 'Solo las raras',      desc: 'Lista de raras para buscar cambio' },
-  ]
-
-  return (
-    <div className="space-y-3">
-      <div className="surface p-5">
-        <p className="text-[10px] uppercase tracking-widest font-bold mb-4" style={{ color: '#aaa' }}>Resumen</p>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { val: missing.length,                                       label: 'Faltantes',   clr: '#111'    },
-            { val: allStickers.filter(s => owned.has(s.id)).length,      label: 'Conseguidas', clr: C.emerald },
-            { val: `${pct}%`,                                            label: 'Completado',  clr: C.purple  },
-          ].map(({ val, label, clr }) => (
-            <div key={label} className="rounded-xl p-3 text-center" style={{ background: '#f6f6f8' }}>
-              <p className="text-2xl font-black tabular-nums" style={{ color: clr }}>{val}</p>
-              <p className="text-xs mt-0.5" style={{ color: '#aaa' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      {formats.map(f => (
-        <div key={f.id} className="surface p-4">
-          <p className="font-semibold text-sm" style={{ color: '#111' }}>{f.title}</p>
-          <p className="text-xs mb-3" style={{ color: '#aaa' }}>{f.desc}</p>
-          <div className="rounded-xl p-3 mb-3 max-h-32 overflow-y-auto" style={{ background: '#f6f6f8' }}>
-            <pre className="text-xs whitespace-pre-wrap font-mono leading-relaxed" style={{ color: '#666' }}>
-              {buildText(f.id)}
-            </pre>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => copy(f.id)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-              style={{ background: copied === f.id ? C.emerald : 'rgba(0,0,0,0.07)',
-                       color:      copied === f.id ? '#fff'    : '#555' }}>
-              {copied === f.id ? 'Copiado' : 'Copiar'}
-            </button>
-            <button onClick={() => whatsapp(f.id)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
-              style={{ background: '#25D366' }}
-              onMouseOver={e => e.currentTarget.style.background = '#20bd5a'}
-              onMouseOut={e  => e.currentTarget.style.background = '#25D366'}>
-              WhatsApp
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [authLoading,   setAuthLoading]   = useState(true)
-  const [user,          setUser]          = useState(null)
-  const [albumOwnerId,  setAlbumOwnerId]  = useState(null)
-  const [owned,         setOwned]         = useState(loadOwned)
-  const [tab,           setTab]           = useState('album')
-  const [hasCoca,       setHasCoca]       = useState(() => loadHasCoca() === 'true')
-  const [showCocaModal, setShowCocaModal] = useState(() => loadHasCoca() === null)
-  const [showShareDrawer, setShowShareDrawer] = useState(false)
-  const [hasPendingJoin,  setHasPendingJoin]  = useState(() => !!localStorage.getItem('pending_join_token'))
+  const [authLoading,    setAuthLoading]    = useState(true)
+  const [user,           setUser]           = useState(null)
+  const [albumOwnerId,   setAlbumOwnerId]   = useState(null)
+  const [owned,          setOwned]          = useState(loadOwned)
+  const [hasCoca,        setHasCoca]        = useState(() => loadHasCoca() === 'true')
+  const [showCocaModal,  setShowCocaModal]  = useState(() => loadHasCoca() === null)
+  const [sidePanel,      setSidePanel]      = useState(null)
+  const [rareToast,      setRareToast]      = useState(null)
+  const [milestone,      setMilestone]      = useState(null)
+  const [hasPendingJoin, setHasPendingJoin] = useState(() => !!localStorage.getItem('pending_join_token'))
   const initialSyncDone = useRef(false)
+  const prevPctRef      = useRef(null)
 
   const allStickers = useMemo(() => hasCoca ? ALL_STICKERS_CC : ALL_STICKERS, [hasCoca])
+  const totalAct    = allStickers.length
+  const ownedAct    = allStickers.filter(s => owned.has(s.id)).length
+  const pct         = totalAct ? Math.round((ownedAct / totalAct) * 100) : 0
 
-  // Parse ?join= from URL and store in localStorage before any OAuth redirects clear it
   useEffect(() => {
-    const params    = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams(window.location.search)
     const joinToken = params.get('join')
     if (joinToken) {
       localStorage.setItem('pending_join_token', joinToken)
@@ -982,30 +778,20 @@ export default function App() {
 
   useEffect(() => { saveOwned(owned) }, [owned])
 
-  // Auth subscription
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
-      setAuthLoading(false)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setAuthLoading(false) })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
-      if (!session) {
-        initialSyncDone.current = false
-        setAlbumOwnerId(null)
-      }
+      if (!session) { initialSyncDone.current = false; setAlbumOwnerId(null) }
     })
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  // On user login: handle pending join + initial sync
   useEffect(() => {
     if (!user || initialSyncDone.current) return
     initialSyncDone.current = true
-
     async function initialize() {
       let targetId = user.id
-
       const pendingToken = localStorage.getItem('pending_join_token')
       if (pendingToken) {
         localStorage.removeItem('pending_join_token')
@@ -1016,14 +802,12 @@ export default function App() {
         const ownerId = await getMyAlbumOwnerId(user.id)
         if (ownerId) targetId = ownerId
       }
-
       setAlbumOwnerId(targetId)
-
       const data = await loadProgress(targetId).catch(() => null)
       if (!data) {
         await saveProgress(targetId, [...owned], hasCoca).catch(console.error)
       } else {
-        const merged     = new Set([...owned, ...(data.owned_ids || [])])
+        const merged = new Set([...owned, ...(data.owned_ids || [])])
         const cocaMerged = data.has_coca || hasCoca
         if (merged.size !== owned.size) setOwned(merged)
         if (cocaMerged !== hasCoca) { setHasCoca(cocaMerged); saveHasCoca(cocaMerged) }
@@ -1032,159 +816,87 @@ export default function App() {
         }
       }
     }
-
     initialize().catch(console.error)
   }, [user])
 
-  // Debounced cloud save
   useEffect(() => {
     if (!user || !initialSyncDone.current || !albumOwnerId) return
-    const t = setTimeout(() => {
-      saveProgress(albumOwnerId, [...owned], hasCoca).catch(console.error)
-    }, 600)
+    const t = setTimeout(() => saveProgress(albumOwnerId, [...owned], hasCoca).catch(console.error), 600)
     return () => clearTimeout(t)
   }, [owned, hasCoca, user, albumOwnerId])
 
-  function handleCocaChoice(val) {
-    setHasCoca(val); saveHasCoca(val); setShowCocaModal(false)
-  }
-  function toggleCoca() {
-    const next = !hasCoca; setHasCoca(next); saveHasCoca(next)
-  }
-  async function handleLogout() {
-    await signOut()
-    initialSyncDone.current = false
-  }
+  // Milestone check: only triggers when crossing the threshold, not on load
+  useEffect(() => {
+    if (!user || !initialSyncDone.current) return
+    const prev = prevPctRef.current
+    prevPctRef.current = pct
+    if (prev === null) return
+    if (pct >= 100 && prev < 100 && !localStorage.getItem('ms_100')) {
+      localStorage.setItem('ms_100', '1'); setMilestone(100)
+    } else if (pct >= 50 && prev < 50 && !localStorage.getItem('ms_50')) {
+      localStorage.setItem('ms_50', '1'); setMilestone(50)
+    }
+  }, [pct, user])
 
-  const toggle   = useCallback(id => {
-    setOwned(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
-  }, [])
-  const addMany  = useCallback(ids => {
-    setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n })
-  }, [])
-  const removeMany = useCallback(ids => {
-    setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n })
-  }, [])
+  function handleCocaChoice(val) { setHasCoca(val); saveHasCoca(val); setShowCocaModal(false) }
+  function toggleCoca() { const n = !hasCoca; setHasCoca(n); saveHasCoca(n) }
+  async function handleLogout() { await signOut(); initialSyncDone.current = false }
 
-  const totalAct = allStickers.length
-  const ownedAct = allStickers.filter(s => owned.has(s.id)).length
-  const pct      = Math.round((ownedAct / totalAct) * 100)
-
-  const tabs = [
-    { id: 'album',    label: 'Álbum'    },
-    { id: 'faltan',   label: 'Faltan'   },
-    { id: 'raras',    label: 'Raras'    },
-    { id: 'exportar', label: 'Exportar' },
-  ]
+  const toggle   = useCallback(id => { setOwned(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n }) }, [])
+  const addMany  = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n }) }, [])
+  const removeMany = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n }) }, [])
+  const handleRareFound = useCallback(sticker => { setRareToast(sticker) }, [])
 
   if (authLoading) return <LoadingScreen />
   if (!user)       return <LoginScreen hasPendingJoin={hasPendingJoin} />
 
-  const isSharedMember = albumOwnerId && albumOwnerId !== user.id
-
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
       {showCocaModal && <CocaModal onChoice={handleCocaChoice} />}
-      {showShareDrawer && (
-        <ShareDrawer user={user} albumOwnerId={albumOwnerId}
-          onClose={() => setShowShareDrawer(false)} />
-      )}
+      {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} />}
+      {rareToast && <RareToast sticker={rareToast} onClose={() => setRareToast(null)} />}
+      {milestone && <MilestoneCelebration milestone={milestone} onClose={() => setMilestone(null)} />}
 
-      {/* Header */}
-      <header className="sticky top-0 z-30"
-        style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(12px)',
-                 borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+      <header className="sticky top-0 z-30" style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
         <div style={{ height: 3, background: C.strip }} />
-
         <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-4 pb-3">
-          <div className="flex items-end justify-between mb-3">
+          <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#bbb' }}>Panini</p>
-              <h1 className="font-black text-xl tracking-tight leading-none mt-0.5" style={{ color: '#111' }}>
-                Mundial 2026
-              </h1>
-              {isSharedMember && (
-                <p className="text-[10px] mt-1 font-semibold" style={{ color: C.purple }}>
-                  Álbum compartido
-                </p>
+              <h1 className="font-black text-xl tracking-tight leading-none mt-0.5" style={{ color: '#111' }}>Mundial 2026</h1>
+              {albumOwnerId && albumOwnerId !== user.id && (
+                <p style={{ fontSize: 10, fontWeight: 600, color: C.purple, marginTop: 2 }}>Álbum compartido</p>
               )}
             </div>
-            <div className="flex items-center gap-2.5">
-              {/* Share button */}
-              <button onClick={() => setShowShareDrawer(true)}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                style={{ background: 'rgba(0,0,0,0.06)', color: '#555' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'}
-                onMouseOut={e  => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5"  r="3"/>
-                  <circle cx="6"  cy="12" r="3"/>
-                  <circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59"  y1="13.51" x2="15.42" y2="17.49"/>
-                  <line x1="15.41" y1="6.51"  x2="8.59"  y2="10.49"/>
-                </svg>
-                Compartir
-              </button>
-
-              <div className="text-right">
-                <span className="text-3xl font-black tabular-nums" style={{ color: C.purple }}>{pct}%</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <HamburgerMenu onOpen={setSidePanel} />
+              <div style={{ textAlign: 'right' }}>
+                <span className="font-black tabular-nums" style={{ fontSize: 30, color: C.purple }}>{pct}%</span>
                 <p className="text-xs" style={{ color: '#aaa' }}>{ownedAct} / {totalAct}</p>
               </div>
             </div>
           </div>
           <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-            <div className="h-1.5 rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: C.strip }} />
+            <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: C.strip }} />
           </div>
-        </div>
-
-        <div className="max-w-6xl mx-auto flex" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex-1 py-3 text-xs font-semibold tracking-wide transition-colors"
-              style={tab === t.id
-                ? { color: C.purple, borderBottom: `2px solid ${C.purple}` }
-                : { color: '#aaa' }}
-              onMouseOver={e => { if (tab !== t.id) e.currentTarget.style.color = '#555' }}
-              onMouseOut={e  => { if (tab !== t.id) e.currentTarget.style.color = '#aaa' }}>
-              {t.label}
-            </button>
-          ))}
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-5">
-        {tab === 'album'    && <AlbumTab    allStickers={allStickers} owned={owned} toggle={toggle} addMany={addMany} removeMany={removeMany} hasCoca={hasCoca} onToggleCoca={toggleCoca} />}
-        {tab === 'faltan'   && <FaltanTab   allStickers={allStickers} owned={owned} />}
-        {tab === 'raras'    && <RarasTab    allStickers={allStickers} owned={owned} />}
-        {tab === 'exportar' && <ExportarTab allStickers={allStickers} owned={owned} />}
+        <AlbumTab allStickers={allStickers} owned={owned} toggle={toggle} addMany={addMany} removeMany={removeMany} hasCoca={hasCoca} onToggleCoca={toggleCoca} onRareFound={handleRareFound} />
       </main>
 
-      {/* Footer */}
-      <footer className="max-w-6xl w-full mx-auto px-4 lg:px-8 pb-8 pt-6 mt-2"
-        style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="flex items-center justify-between mb-4 pb-4"
-          style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+      <footer className="max-w-6xl w-full mx-auto px-4 lg:px-8 pb-8 pt-6 mt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        <div className="flex items-center justify-between mb-4 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <p className="text-xs" style={{ color: '#888' }}>{user.email}</p>
-          <button onClick={handleLogout}
-            className="text-xs font-semibold transition-colors"
-            style={{ color: '#bbb' }}
-            onMouseOver={e => e.currentTarget.style.color = '#e53935'}
-            onMouseOut={e  => e.currentTarget.style.color = '#bbb'}>
-            Cerrar sesión
-          </button>
+          <button onClick={handleLogout} className="text-xs font-semibold transition-colors" style={{ color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}
+            onMouseOver={e => e.currentTarget.style.color = '#e53935'} onMouseOut={e => e.currentTarget.style.color = '#bbb'}>Cerrar sesión</button>
         </div>
         <div className="text-center space-y-1">
           <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#ccc' }}>Creado por</p>
           <p className="text-sm font-bold tracking-tight" style={{ color: '#888' }}>Shift</p>
-          <a href="tel:5510807509" className="block text-xs tabular-nums"
-            style={{ color: '#bbb' }}
-            onMouseOver={e => e.currentTarget.style.color = '#666'}
-            onMouseOut={e  => e.currentTarget.style.color = '#bbb'}>
-            55 1080 7509
-          </a>
+          <a href="tel:5510807509" className="block text-xs tabular-nums" style={{ color: '#bbb' }}
+            onMouseOver={e => e.currentTarget.style.color = '#666'} onMouseOut={e => e.currentTarget.style.color = '#bbb'}>55 1080 7509</a>
         </div>
       </footer>
     </div>
