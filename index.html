@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Álbum Mundial 2026 — by Shift</title>
+    <meta name="description" content="Tracker de estampas Panini FIFA Mundial 2026. Marca lo que tienes, ve qué te falta, exporta tu lista para cambios." />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#7c3aed" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <!-- iOS home-screen install -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Mundial 2026" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+
+    <!-- Open Graph (WhatsApp / FB / Twitter preview) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Álbum Mundial 2026 — Tracker" />
+    <meta property="og:description" content="Lleva el control de tus estampas Panini Mundial 2026. Hecho por Shift." />
+    <meta property="og:image" content="/icon.svg" />
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+            colors: {
+              brand: '#7C3AED',
+              brandDark: '#5B21B6',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      * { -webkit-user-select: none; user-select: none; }
+      input, textarea, select { -webkit-user-select: text; user-select: text; }
+      html { font-family: 'Inter', system-ui, sans-serif; }
+      body { background: #f2f2f5; }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: #e8e8ec; }
+      ::-webkit-scrollbar-thumb { background: #c0c0cc; border-radius: 3px; }
+      .surface { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+      .surface-sm { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+      @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.25)} 100%{transform:scale(1)} }
+      .pop { animation: pop 0.12s ease-out; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable: full-bleed background with safe zone for "26" in center 80% -->
+  <rect width="512" height="512" fill="#fff8e1"/>
+  <!-- Pattern with safe area -->
+  <circle cx="-20" cy="-20" r="100" fill="#e53935"/>
+  <circle cx="120" cy="20"  r="85" fill="#26a69a"/>
+  <circle cx="270" cy="-10" r="95" fill="#fbc02d"/>
+  <circle cx="420" cy="20"  r="90" fill="#7e57c2"/>
+  <circle cx="540" cy="50"  r="100" fill="#42a5f5"/>
+
+  <circle cx="20"  cy="160" r="85" fill="#9ccc65"/>
+  <circle cx="490" cy="170" r="85" fill="#ec407a"/>
+
+  <circle cx="-10" cy="320" r="90" fill="#ff9800"/>
+  <circle cx="510" cy="330" r="90" fill="#cddc39"/>
+
+  <circle cx="40"  cy="490" r="100" fill="#5c6bc0"/>
+  <circle cx="180" cy="530" r="90" fill="#ffb300"/>
+  <circle cx="330" cy="525" r="95" fill="#66bb6a"/>
+  <circle cx="480" cy="510" r="100" fill="#f06292"/>
+
+  <!-- Bold "26" smaller for safe zone -->
+  <text x="256" y="320" font-family="Inter, Helvetica, Arial, sans-serif"
+        font-weight="900" font-size="220" letter-spacing="-10"
+        text-anchor="middle" fill="#ffffff"
+        stroke="#ffffff" stroke-width="3" paint-order="stroke">26</text>
+</svg>

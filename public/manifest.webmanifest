@@ -1,0 +1,17 @@
+{
+  "name": "Álbum Mundial 2026 — by Shift",
+  "short_name": "Mundial 2026",
+  "description": "Tracker de estampas Panini FIFA Mundial 2026. Marca lo que tienes, exporta lo que te falta.",
+  "lang": "es-MX",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f2f5",
+  "theme_color": "#7c3aed",
+  "categories": ["sports", "entertainment", "utilities"],
+  "icons": [
+    { "src": "/icon.svg",          "sizes": "any",       "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any",       "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

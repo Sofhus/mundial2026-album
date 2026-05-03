@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="r"><rect width="512" height="512" rx="96"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="512" height="512" fill="#fff8e1"/>
+    <!-- Row 1 -->
+    <circle cx="40"  cy="40"  r="80" fill="#e53935"/>
+    <circle cx="170" cy="50"  r="75" fill="#26a69a"/>
+    <circle cx="300" cy="35"  r="85" fill="#fbc02d"/>
+    <circle cx="440" cy="55"  r="78" fill="#7e57c2"/>
+    <!-- Row 2 -->
+    <circle cx="60"  cy="180" r="78" fill="#42a5f5"/>
+    <circle cx="200" cy="190" r="88" fill="#ef5350"/>
+    <circle cx="340" cy="180" r="80" fill="#9ccc65"/>
+    <circle cx="475" cy="195" r="74" fill="#ec407a"/>
+    <!-- Row 3 -->
+    <circle cx="40"  cy="320" r="85" fill="#ff9800"/>
+    <circle cx="180" cy="335" r="78" fill="#ab47bc"/>
+    <circle cx="320" cy="325" r="82" fill="#26c6da"/>
+    <circle cx="465" cy="340" r="80" fill="#cddc39"/>
+    <!-- Row 4 -->
+    <circle cx="60"  cy="470" r="80" fill="#5c6bc0"/>
+    <circle cx="200" cy="475" r="78" fill="#ffb300"/>
+    <circle cx="340" cy="470" r="85" fill="#66bb6a"/>
+    <circle cx="475" cy="475" r="76" fill="#f06292"/>
+    <!-- Bold white "26" overlay (album hero element) -->
+    <text x="256" y="340" font-family="Inter, Helvetica, Arial, sans-serif"
+          font-weight="900" font-size="300" letter-spacing="-14"
+          text-anchor="middle" fill="#ffffff"
+          stroke="#ffffff" stroke-width="4" paint-order="stroke">26</text>
+  </g>
+</svg>
