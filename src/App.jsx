@@ -18,27 +18,69 @@ function loadOwned() {
 function saveOwned(set) { localStorage.setItem('owned_2026v2', JSON.stringify([...set])) }
 function loadHasCoca() { return localStorage.getItem('coca_2026') }
 function saveHasCoca(v) { localStorage.setItem('coca_2026', v ? 'true' : 'false') }
+function loadDupes() {
+  try { return JSON.parse(localStorage.getItem('dupes_2026v2') || '{}') }
+  catch { return {} }
+}
+function saveDupesLs(d) { localStorage.setItem('dupes_2026v2', JSON.stringify(d)) }
 
 const C = {
-  lime:    '#8bc34a',
-  teal:    '#4db6ac',
-  purple:  '#7c3aed',
-  red:     '#e53935',
-  gold:    '#d97706',
-  emerald: '#16a34a',
-  strip:   'linear-gradient(90deg, #8bc34a 0%, #4db6ac 30%, #7c3aed 65%, #e53935 100%)',
+  primary:      '#1B3A8C',   // azul FIFA — botones, nav activo, CTAs
+  primaryHover: '#142D6E',   // azul FIFA oscuro — hover/pressed
+  primarySoft:  'rgba(27, 58, 140, 0.08)',
+  primaryRing:  'rgba(27, 58, 140, 0.4)',
+
+  accent:       '#D4AF37',   // dorado — progreso, especiales, foils, barra top
+  accentSoft:   'rgba(212, 175, 55, 0.10)',
+  accentGrad:   'linear-gradient(90deg, #F5D77E 0%, #D4AF37 50%, #B8860B 100%)',
+
+  success:      '#16A34A',   // verde — exclusivo "tengo / obtenida"
+  successSoft:  'rgba(22, 163, 74, 0.10)',
+
+  pending:      '#A1A1AA',   // gris zinc — faltante
+  pendingSoft:  'rgba(161, 161, 170, 0.12)',
+
+  duplicate:    '#57534E',   // stone oscuro — badge repetidas
+  duplicateSoft:'rgba(87, 83, 78, 0.10)',
+
+  error:        '#DC2626',   // rojo — errores, destructive
+  errorSoft:    'rgba(220, 38, 38, 0.10)',
+
+  text:         '#1C1917',   // texto primario
+  textSec:      '#78716C',   // texto secundario
+  textTer:      '#A8A29E',   // texto terciario / placeholder
+
+  coke:         '#D12421',   // rojo Coca-Cola
+  cokeSoft:     'rgba(209, 36, 33, 0.10)',
+
+  bgPage:       '#F8F7F4',   // fondo página (crema cálido)
+  bgSurface:    '#FFFFFF',   // fondo cards
+  border:       '#E5E2DB',   // bordes
 }
 
 // ─── Loading ──────────────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f5' }}>
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bgPage }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2.5px solid ${C.purple}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-        <p style={{ fontSize: 12, color: '#bbb', fontWeight: 500 }}>Cargando…</p>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2.5px solid ${C.primary}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+        <p style={{ fontSize: 12, color: C.textSec, fontWeight: 500 }}>Cargando…</p>
       </div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
+  )
+}
+
+function TrophyIcon({ size = 22, color = '#D4AF37' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+      <path d="M4 22h16"/>
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+    </svg>
   )
 }
 
@@ -75,59 +117,64 @@ function LoginScreen({ hasPendingJoin }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f2f2f5' }}>
-      <div style={{ height: 3, background: C.strip }} />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: C.bgPage }}>
+      <div style={{ height: 3, background: C.accentGrad }} />
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <div style={{ width: '100%', maxWidth: 340 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <p style={{ fontSize: 9, letterSpacing: '0.2em', fontWeight: 700, color: '#ccc', textTransform: 'uppercase' }}>Panini</p>
-            <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em', color: '#111', marginTop: 4, lineHeight: 1 }}>Mundial 2026</h1>
-            <p style={{ fontSize: 12, color: '#bbb', fontWeight: 500, marginTop: 6 }}>by Shift</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #FBE47A 0%, #D4AF37 50%, #B8860B 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(184,134,11,0.3)' }}>
+                <TrophyIcon size={28} color="#fff" />
+              </div>
+            </div>
+            <p style={{ fontSize: 9, letterSpacing: '0.25em', fontWeight: 700, color: C.textSec, textTransform: 'uppercase' }}>FIFA World Cup 26</p>
+            <h1 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '0.02em', color: C.accent, marginTop: 6, lineHeight: 1, fontFamily: "'Bebas Neue', Impact, 'Arial Narrow', Arial, sans-serif" }}>Mundial 2026</h1>
+            <p style={{ fontSize: 11, color: C.textTer, fontWeight: 500, marginTop: 6, letterSpacing: '0.05em' }}>Álbum Panini · by Shift</p>
           </div>
           {hasPendingJoin && (
-            <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 16, textAlign: 'center', background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)' }}>
-              <p style={{ fontWeight: 600, fontSize: 13, color: C.purple }}>Te invitaron a llenar un álbum</p>
-              <p style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Inicia sesión para unirte</p>
+            <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 16, textAlign: 'center', background: 'rgba(27,58,140,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
+              <p style={{ fontWeight: 600, fontSize: 13, color: C.primary }}>Te invitaron a llenar un álbum</p>
+              <p style={{ fontSize: 11, color: C.textTer, marginTop: 2 }}>Inicia sesión para unirte</p>
             </div>
           )}
           <div className="surface" style={{ padding: 24 }}>
-            <button onClick={handleGoogle} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', border: '1.5px solid rgba(0,0,0,0.11)', color: '#333', cursor: 'pointer', transition: 'background 0.15s' }}
-              onMouseOver={e => e.currentTarget.style.background = '#f6f6f8'}
-              onMouseOut={e  => e.currentTarget.style.background = '#fff'}>
+            <button onClick={handleGoogle} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#ffffff', border: '1.5px solid rgba(0,0,0,0.11)', color: C.text, cursor: 'pointer', transition: 'background 0.15s' }}
+              onMouseOver={e => e.currentTarget.style.background = '#F5F4F1'}
+              onMouseOut={e  => e.currentTarget.style.background = '#ffffff'}>
               <GoogleIcon /> Continuar con Google
             </button>
-            {googleError && <p style={{ fontSize: 11, color: '#e53935', textAlign: 'center', marginTop: 8 }}>{googleError}</p>}
+            {googleError && <p style={{ fontSize: 11, color: '#DC2626', textAlign: 'center', marginTop: 8 }}>{googleError}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
               <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
-              <span style={{ fontSize: 11, color: '#c0c0c0' }}>o con tu correo</span>
+              <span style={{ fontSize: 11, color: C.textTer }}>o con tu correo</span>
               <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
             </div>
             {emailStatus === 'sent' ? (
-              <div style={{ padding: '16px', borderRadius: 12, textAlign: 'center', background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
-                <p style={{ fontWeight: 700, fontSize: 13, color: '#15803d' }}>Revisa tu correo</p>
-                <p style={{ fontSize: 11, color: '#666', marginTop: 4, lineHeight: 1.5 }}>Mandamos un link a <strong>{email}</strong>. Ábrelo desde este dispositivo.</p>
-                <button onClick={() => setEmailStatus('idle')} style={{ fontSize: 11, color: C.purple, fontWeight: 600, marginTop: 10, background: 'none', border: 'none', cursor: 'pointer' }}>Usar otro correo</button>
+              <div style={{ padding: '16px', borderRadius: 12, textAlign: 'center', background: 'rgba(27,58,140,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
+                <p style={{ fontWeight: 700, fontSize: 13, color: C.success }}>Revisa tu correo</p>
+                <p style={{ fontSize: 11, color: C.textTer, marginTop: 4, lineHeight: 1.5 }}>Mandamos un link a <strong>{email}</strong>. Ábrelo desde este dispositivo.</p>
+                <button onClick={() => setEmailStatus('idle')} style={{ fontSize: 11, color: C.primary, fontWeight: 600, marginTop: 10, background: 'none', border: 'none', cursor: 'pointer' }}>Usar otro correo</button>
               </div>
             ) : (
               <>
                 <input type="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleEmail()} placeholder="tu@correo.com"
-                  style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px', marginBottom: 8, outline: 'none', background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+                  style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px', marginBottom: 8, outline: 'none', background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', color: C.text, boxSizing: 'border-box', transition: 'border-color 0.15s' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(27,58,140,0.4)'}
                   onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
-                {emailError && <p style={{ fontSize: 11, color: '#e53935', marginBottom: 6 }}>{emailError}</p>}
+                {emailError && <p style={{ fontSize: 11, color: '#DC2626', marginBottom: 6 }}>{emailError}</p>}
                 <button onClick={handleEmail} disabled={emailStatus === 'sending' || !email.trim()}
-                  style={{ width: '100%', padding: '11px', borderRadius: 12, fontSize: 13, fontWeight: 600, color: '#fff', background: emailStatus === 'sending' || !email.trim() ? '#c4b5fd' : C.purple, border: 'none', cursor: emailStatus === 'sending' || !email.trim() ? 'not-allowed' : 'pointer' }}>
+                  style={{ width: '100%', padding: '11px', borderRadius: 12, fontSize: 13, fontWeight: 600, color: '#fff', background: emailStatus === 'sending' || !email.trim() ? C.primaryHover : C.primary, border: 'none', cursor: emailStatus === 'sending' || !email.trim() ? 'not-allowed' : 'pointer' }}>
                   {emailStatus === 'sending' ? 'Enviando…' : 'Enviar link de acceso'}
                 </button>
               </>
             )}
           </div>
-          <p style={{ textAlign: 'center', fontSize: 11, color: '#ccc', marginTop: 20 }}>Tu progreso se guarda automáticamente</p>
+          <p style={{ textAlign: 'center', fontSize: 11, color: C.textSec, marginTop: 20 }}>Tu progreso se guarda automáticamente</p>
         </div>
       </div>
       <footer style={{ textAlign: 'center', paddingBottom: 32 }}>
-        <p style={{ fontSize: 9, letterSpacing: '0.2em', fontWeight: 700, color: '#ddd', textTransform: 'uppercase' }}>Creado por</p>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#bbb', marginTop: 2 }}>Shift</p>
+        <p style={{ fontSize: 9, letterSpacing: '0.2em', fontWeight: 700, color: C.textSec, textTransform: 'uppercase' }}>Creado por</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: C.textSec, marginTop: 2 }}>Shift</p>
       </footer>
     </div>
   )
@@ -135,7 +182,7 @@ function LoginScreen({ hasPendingJoin }) {
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 function Confetti() {
-  const COLORS = [C.purple, C.lime, C.teal, C.red, C.gold, '#f472b6', '#60a5fa', '#fb923c']
+  const COLORS = [C.primary, C.success, C.primary, C.error, C.accent, '#f472b6', '#60a5fa', '#fb923c']
   const particles = useMemo(() =>
     Array.from({ length: 80 }, (_, i) => ({
       id: i, x: Math.random() * 100, delay: Math.random() * 1.6,
@@ -168,7 +215,7 @@ function MilestoneCelebration({ milestone, onClose }) {
       <Confetti />
       <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.45)' }} onClick={onClose}>
         <div className="surface" style={{ padding: 32, textAlign: 'center', maxWidth: 300, width: '100%' }} onClick={e => e.stopPropagation()}>
-          <div style={{ width: 60, height: 60, margin: '0 auto 16px', borderRadius: '50%', background: is100 ? `linear-gradient(135deg,${C.gold},#f59e0b)` : `linear-gradient(135deg,${C.purple},#6d28d9)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 60, height: 60, margin: '0 auto 16px', borderRadius: '50%', background: is100 ? `linear-gradient(135deg,${C.accent},#f59e0b)` : `linear-gradient(135deg,${C.primary},#102356)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {is100 ? (
               <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             ) : (
@@ -177,13 +224,13 @@ function MilestoneCelebration({ milestone, onClose }) {
               </svg>
             )}
           </div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#111', marginBottom: 8, lineHeight: 1.1 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: C.text, marginBottom: 8, lineHeight: 1.1 }}>
             {is100 ? '¡Álbum completo!' : '¡Ya vas a la mitad!'}
           </h2>
-          <p style={{ fontSize: 13, color: '#777', lineHeight: 1.6, marginBottom: 24 }}>
+          <p style={{ fontSize: 13, color: C.textTer, lineHeight: 1.6, marginBottom: 24 }}>
             {is100 ? 'Conseguiste todas las estampas del álbum Panini FIFA Mundial 2026. Eso no lo logra cualquiera.' : 'Llevas el 50% del álbum. Ya falta menos, sigue así.'}
           </p>
-          <button onClick={onClose} style={{ width: '100%', padding: '13px', borderRadius: 12, fontWeight: 700, fontSize: 13, color: '#fff', background: is100 ? C.gold : C.purple, border: 'none', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ width: '100%', padding: '13px', borderRadius: 12, fontWeight: 700, fontSize: 13, color: '#fff', background: is100 ? C.accent : C.primary, border: 'none', cursor: 'pointer' }}>
             {is100 ? '¡Gracias!' : 'Seguir llenando'}
           </button>
         </div>
@@ -199,17 +246,34 @@ function RareToast({ sticker, onClose }) {
     <>
       <style>{`@keyframes toastUp{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
       <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 80, width: 'calc(100% - 32px)', maxWidth: 360, animation: 'toastUp 0.3s ease-out' }}>
-        <div className="surface" style={{ padding: 16, display: 'flex', alignItems: 'flex-start', gap: 12, outline: `2px solid ${C.gold}`, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: C.gold, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+        <div className="surface" style={{ padding: 16, display: 'flex', alignItems: 'flex-start', gap: 12, outline: `2px solid ${C.accent}`, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: C.accent, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
             <span style={{ fontSize: 7, fontWeight: 700, opacity: 0.75, letterSpacing: '0.06em' }}>{sticker.id.split('-')[0]}</span>
             <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{sticker.num}</span>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 700, fontSize: 13, color: '#111' }}>Estampa difícil de conseguir</p>
+            <p style={{ fontWeight: 700, fontSize: 13, color: C.text }}>Estampa difícil de conseguir</p>
             <p style={{ fontSize: 11, color: '#b45309', fontWeight: 600, marginTop: 2 }}>{sticker.label}</p>
-            {sticker.rareReason && <p style={{ fontSize: 11, color: '#aaa', marginTop: 2, lineHeight: 1.4 }}>{sticker.rareReason}</p>}
+            {sticker.rareReason && <p style={{ fontSize: 11, color: C.textTer, marginTop: 2, lineHeight: 1.4 }}>{sticker.rareReason}</p>}
           </div>
-          <button onClick={onClose} style={{ fontSize: 20, lineHeight: 1, color: '#ccc', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', marginTop: -2 }}>×</button>
+          <button onClick={onClose} style={{ fontSize: 20, lineHeight: 1, color: C.textSec, flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', marginTop: -2 }}>×</button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Dupe added toast (long-press feedback) ──────────────────────────────────
+function DupeToast({ sticker, count, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 1600); return () => clearTimeout(t) }, [onClose])
+  return (
+    <>
+      <style>{`@keyframes toastPop{from{opacity:0;transform:translateX(-50%) translateY(14px) scale(0.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`}</style>
+      <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 80, animation: 'toastPop 0.18s ease-out', pointerEvents: 'none' }}>
+        <div style={{ background: C.text, color: '#fff', padding: '8px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.25)' }}>
+          <span style={{ color: C.accent }}>+1</span>
+          <span style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}>{sticker.id}</span>
+          <span style={{ color: C.textTer, fontWeight: 500 }}>repetidas: {count}</span>
         </div>
       </div>
     </>
@@ -217,10 +281,12 @@ function RareToast({ sticker, onClose }) {
 }
 
 // ─── Panel: Exportar ──────────────────────────────────────────────────────────
-function ExportarContent({ allStickers, owned }) {
+function ExportarContent({ allStickers, owned, dupes = {} }) {
   const [copied, setCopied] = useState('')
   const missing = allStickers.filter(s => !owned.has(s.id))
   const pct = Math.round((allStickers.filter(s => owned.has(s.id)).length / allStickers.length) * 100)
+  const dupeIds = Object.keys(dupes).filter(id => (dupes[id] || 0) > 0)
+  const totalDupes = Object.values(dupes).reduce((a, b) => a + b, 0)
 
   function buildText(format) {
     const header = `Me faltan ${missing.length} estampas del álbum Panini FIFA Mundial 2026 (${pct}% completado)\n\n`
@@ -258,6 +324,23 @@ function ExportarContent({ allStickers, owned }) {
       if (!miss.length) return 'Ya tengo todas las estampas especiales del álbum 2026.'
       return `Me faltan ${miss.length} estampas especiales:\n\n` + miss.map(s => `${s.id} — ${s.label}`).join('\n') + '\n\n¿Tienes alguna para cambio?'
     }
+    if (format === 'trade') {
+      if (!dupeIds.length) return 'Todavía no tengo estampas repetidas para cambio.'
+      const byTeam = {}
+      dupeIds.forEach(id => {
+        const dash = id.lastIndexOf('-')
+        const code = id.slice(0, dash)
+        const num  = parseInt(id.slice(dash + 1))
+        if (!byTeam[code]) byTeam[code] = []
+        byTeam[code].push({ num, count: dupes[id] })
+      })
+      const order = ['FWC', 'CC', ...TEAM_LIST.map(t => t.code)]
+      const lines = order.filter(c => byTeam[c]).map(c => {
+        const items = byTeam[c].sort((a, b) => a.num - b.num).map(x => x.count > 1 ? `${x.num} (×${x.count})` : `${x.num}`)
+        return `${c}: ${items.join(', ')}`
+      })
+      return `Tengo ${totalDupes} estampas repetidas para cambio del Mundial 2026:\n\n` + lines.join('\n') + '\n\n¿Tienes alguna que te falte?'
+    }
   }
 
   async function copy(format) { await navigator.clipboard.writeText(buildText(format)); setCopied(format); setTimeout(() => setCopied(''), 2000) }
@@ -267,31 +350,32 @@ function ExportarContent({ allStickers, owned }) {
     { id: 'ranges',  title: 'Por código y rango', desc: 'MEX: 3-7, 12 · ARG: 5, 18' },
     { id: 'bygroup', title: 'Por grupo A–L',       desc: 'Organizado por grupo del torneo' },
     { id: 'rare',    title: 'Solo las especiales',  desc: 'Lista para buscar cambio' },
+    { id: 'trade',   title: 'Tengo para cambio',    desc: `Tus ${totalDupes} repetidas, listas para WhatsApp` },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {[
-          { val: missing.length,                                      label: 'Faltantes',   clr: '#111'    },
-          { val: allStickers.filter(s => owned.has(s.id)).length,     label: 'Conseguidas', clr: C.emerald },
-          { val: `${pct}%`,                                           label: 'Completado',  clr: C.purple  },
+          { val: missing.length,                                      label: 'Faltantes',   clr: C.error      },
+          { val: allStickers.filter(s => owned.has(s.id)).length,     label: 'Conseguidas', clr: C.success },
+          { val: `${pct}%`,                                           label: 'Completado',  clr: C.primary  },
         ].map(({ val, label, clr }) => (
-          <div key={label} style={{ background: '#f6f6f8', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+          <div key={label} style={{ background: '#ffffff', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
             <p style={{ fontSize: 20, fontWeight: 900, color: clr, lineHeight: 1 }}>{val}</p>
-            <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
+            <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>{label}</p>
           </div>
         ))}
       </div>
       {formats.map(f => (
-        <div key={f.id} style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
-          <p style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>{f.title}</p>
-          <p style={{ fontSize: 11, color: '#aaa', marginBottom: 10 }}>{f.desc}</p>
-          <div style={{ background: '#f0f0f3', borderRadius: 8, padding: '10px 12px', marginBottom: 10, maxHeight: 100, overflowY: 'auto' }}>
-            <pre style={{ fontSize: 10, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#666', lineHeight: 1.6, margin: 0 }}>{buildText(f.id)}</pre>
+        <div key={f.id} style={{ background: '#ffffff', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{f.title}</p>
+          <p style={{ fontSize: 11, color: C.textTer, marginBottom: 10 }}>{f.desc}</p>
+          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, maxHeight: 100, overflowY: 'auto', border: '1px solid #f6f6f8' }}>
+            <pre style={{ fontSize: 10, whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: C.textSec, lineHeight: 1.6, margin: 0 }}>{buildText(f.id)}</pre>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => copy(f.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: copied === f.id ? C.emerald : 'rgba(0,0,0,0.07)', color: copied === f.id ? '#fff' : '#555', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => copy(f.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: copied === f.id ? C.success : 'rgba(0,0,0,0.06)', color: copied === f.id ? '#fff' : C.textTer, border: 'none', cursor: 'pointer' }}>
               {copied === f.id ? 'Copiado' : 'Copiar'}
             </button>
             <button onClick={() => whatsapp(f.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, background: '#25D366', color: '#fff', border: 'none', cursor: 'pointer' }}>
@@ -378,36 +462,36 @@ function CompartirContent({ user, albumOwnerId }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Compartir álbum */}
-      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+      <div style={{ background: '#ffffff', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.06)' }}>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>👥</div>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(27,58,140,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>👥</div>
           <div>
-            <p style={{ fontWeight: 600, fontSize: 13, color: '#111', margin: 0 }}>Compartir álbum</p>
-            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para llenar el mismo álbum</p>
+            <p style={{ fontWeight: 600, fontSize: 13, color: C.text, margin: 0 }}>Compartir álbum</p>
+            <p style={{ fontSize: 11, color: C.textTer, marginTop: 2, lineHeight: 1.5 }}>Para llenar el mismo álbum</p>
           </div>
         </div>
         {tokenError && (
-          <p style={{ fontSize: 11, color: '#e53935', marginBottom: 10, padding: '8px 10px', borderRadius: 8, background: 'rgba(229,57,53,0.06)' }}>{tokenError}</p>
+          <p style={{ fontSize: 11, color: '#DC2626', marginBottom: 10, padding: '8px 10px', borderRadius: 8, background: 'rgba(220,38,38,0.08)' }}>{tokenError}</p>
         )}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={handleWhatsAppAccount} disabled={loadingToken}
-            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#fff', background: loadingToken ? '#aaa' : '#25D366', border: 'none', cursor: loadingToken ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#fff', background: loadingToken ? C.textTer : '#25D366', border: 'none', cursor: loadingToken ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <WaIcon />{loadingToken ? 'Generando…' : 'WhatsApp'}
           </button>
           <button onClick={handleCopyAccount} disabled={loadingToken}
-            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: copiedAccount ? '#fff' : '#444', background: copiedAccount ? C.emerald : 'rgba(0,0,0,0.07)', border: 'none', cursor: loadingToken ? 'not-allowed' : 'pointer' }}>
+            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: copiedAccount ? '#fff' : C.duplicate, background: copiedAccount ? C.success : 'rgba(0,0,0,0.06)', border: 'none', cursor: loadingToken ? 'not-allowed' : 'pointer' }}>
             {copiedAccount ? '¡Copiado!' : loadingToken ? '…' : 'Copiar link'}
           </button>
         </div>
       </div>
 
       {/* Recomendar app */}
-      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+      <div style={{ background: '#ffffff', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.06)' }}>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(22,163,74,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>📲</div>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(27,58,140,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>📲</div>
           <div>
-            <p style={{ fontWeight: 600, fontSize: 13, color: '#111', margin: 0 }}>Recomendar app</p>
-            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para que alguien lleve su propio álbum por separado</p>
+            <p style={{ fontWeight: 600, fontSize: 13, color: C.text, margin: 0 }}>Recomendar app</p>
+            <p style={{ fontSize: 11, color: C.textTer, marginTop: 2, lineHeight: 1.5 }}>Para que alguien lleve su propio álbum por separado</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -416,7 +500,7 @@ function CompartirContent({ user, albumOwnerId }) {
             <WaIcon />WhatsApp
           </button>
           <button onClick={handleCopyApp}
-            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: copiedApp ? '#fff' : '#444', background: copiedApp ? C.emerald : 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: copiedApp ? '#fff' : C.duplicate, background: copiedApp ? C.success : 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer' }}>
             {copiedApp ? '¡Copiado!' : 'Copiar link'}
           </button>
         </div>
@@ -437,42 +521,42 @@ function ShiftContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em', color: '#111', lineHeight: 1 }}>Shift.</p>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>Tecnología · CDMX</p>
+        <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em', color: C.text, lineHeight: 1 }}>Shift.</p>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: C.textSec, marginTop: 4, textTransform: 'uppercase' }}>Tecnología · CDMX</p>
       </div>
 
-      <p style={{ fontSize: 14, color: '#444', lineHeight: 1.75, margin: 0 }}>
+      <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: 0 }}>
         Somos un studio de tecnología especializado en IA, datos y software a medida. Ayudamos a negocios a automatizar lo que los frena, entender sus datos y construir las herramientas que realmente necesitan.
       </p>
 
       <div>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 10 }}>¿Quién nos busca?</p>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: C.textSec, textTransform: 'uppercase', marginBottom: 10 }}>¿Quién nos busca?</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           {whoNeeds.map((item, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.purple, marginTop: 5, flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5, margin: 0 }}>{item}</p>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.primary, marginTop: 5, flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: C.textSec, lineHeight: 1.5, margin: 0 }}>{item}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 8 }}>Servicios</p>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: C.textSec, textTransform: 'uppercase', marginBottom: 8 }}>Servicios</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {services.map(s => (
-            <span key={s} style={{ fontSize: 11, padding: '5px 11px', borderRadius: 6, background: 'rgba(124,58,237,0.07)', color: C.purple, fontWeight: 600 }}>{s}</span>
+            <span key={s} style={{ fontSize: 11, padding: '5px 11px', borderRadius: 6, background: 'rgba(27,58,140,0.07)', color: C.primary, fontWeight: 600 }}>{s}</span>
           ))}
         </div>
       </div>
 
       <div>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 10 }}>Equipo</p>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: C.textSec, textTransform: 'uppercase', marginBottom: 10 }}>Equipo</p>
         <div style={{ display: 'flex', gap: 10 }}>
           {[{ name: 'Sofia Husny', role: 'Co-fundadora' }, { name: 'Gabriela Shaooli', role: 'Co-fundadora' }].map(({ name, role }) => (
-            <div key={name} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '12px 14px' }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#111', margin: 0 }}>{name}</p>
-              <p style={{ fontSize: 11, color: '#aaa', marginTop: 3 }}>{role}</p>
+            <div key={name} style={{ flex: 1, background: '#ffffff', borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: 0 }}>{name}</p>
+              <p style={{ fontSize: 11, color: C.textTer, marginTop: 3 }}>{role}</p>
             </div>
           ))}
         </div>
@@ -480,12 +564,141 @@ function ShiftContent() {
 
       <div>
         <a href="https://wa.me/525510807509?text=Hola%20Shift%2C%20me%20interesa%20agendar%20una%20consulta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-          <button style={{ width: '100%', padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
+          <button style={{ width: '100%', padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, color: '#fff', background: C.primary, border: 'none', cursor: 'pointer' }}>
             Agendar consulta gratuita
           </button>
         </a>
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#bbb', marginTop: 8 }}>Sin costo · Sin compromiso</p>
+        <p style={{ textAlign: 'center', fontSize: 11, color: C.textSec, marginTop: 8 }}>Sin costo · Sin compromiso</p>
       </div>
+    </div>
+  )
+}
+
+// ─── Panel: Repetidas ─────────────────────────────────────────────────────────
+function RepetidasContent({ allStickers, dupes, addDupe, removeDupe }) {
+  const [search, setSearch] = useState('')
+
+  const dupeStickers = useMemo(() => {
+    const ids = Object.keys(dupes).filter(id => (dupes[id] || 0) > 0)
+    return ids.map(id => allStickers.find(s => s.id === id) || { id, label: id, section: id.split('-')[0], num: parseInt(id.split('-')[1]) || 0, isRare: false })
+  }, [dupes, allStickers])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return dupeStickers
+    return dupeStickers.filter(s =>
+      s.section.toLowerCase().includes(q) ||
+      s.id.toLowerCase().includes(q) ||
+      (s.label || '').toLowerCase().includes(q)
+    )
+  }, [dupeStickers, search])
+
+  const grouped = useMemo(() => {
+    const map = {}
+    filtered.forEach(s => { if (!map[s.section]) map[s.section] = []; map[s.section].push(s) })
+    Object.keys(map).forEach(k => map[k].sort((a, b) => a.num - b.num))
+    return map
+  }, [filtered])
+
+  const totalDupes  = Object.values(dupes).reduce((a, b) => a + b, 0)
+  const uniqueDupes = dupeStickers.length
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Cómo funciona */}
+      <div style={{ background: 'rgba(27,58,140,0.06)', border: '1px solid rgba(27,58,140,0.2)', borderRadius: 12, padding: 14 }}>
+        <p style={{ fontSize: 12, fontWeight: 800, color: C.primary, margin: 0, letterSpacing: '0.02em' }}>Cómo funciona</p>
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { n: '1', t: 'Doble-tap en una estampa marcada (verde) en el álbum', d: 'Se le suma 1 a tus repetidas y aparece un toast de confirmación' },
+            { n: '2', t: 'En esta sección la editas', d: 'Botones +/− por estampa, buscador, conteo total' },
+            { n: '3', t: 'Mándalas por WhatsApp para cambio', d: 'Menú → Exportar → "Tengo para cambio"' },
+            { n: '4', t: 'Match con amigos', d: 'En Amigos, las estampas que les faltan y tú tienes repetidas se ven con borde dorado' },
+          ].map(({ n, t, d }) => (
+            <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, background: C.primary, color: '#fff', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: C.text, margin: 0, lineHeight: 1.4 }}>{t}</p>
+                <p style={{ fontSize: 11, color: C.textSec, margin: '2px 0 0', lineHeight: 1.45 }}>{d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, background: '#F5F4F1', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: C.text, lineHeight: 1, margin: 0 }}>{totalDupes}</p>
+          <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>Repetidas en total</p>
+        </div>
+        <div style={{ flex: 1, background: '#F5F4F1', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: C.primary, lineHeight: 1, margin: 0 }}>{uniqueDupes}</p>
+          <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>Estampas distintas</p>
+        </div>
+      </div>
+
+      {dupeStickers.length > 0 && (
+        <div style={{ position: 'relative' }}>
+          <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: C.textTer, pointerEvents: 'none' }}
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="search" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar equipo o número…"
+            style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px 10px 34px', outline: 'none', background: '#F5F4F1', border: '1px solid rgba(0,0,0,0.1)', color: C.text, boxSizing: 'border-box', transition: 'border-color 0.15s' }}
+            onFocus={e => e.target.style.borderColor = 'rgba(27,58,140,0.4)'}
+            onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
+        </div>
+      )}
+
+      {dupeStickers.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ fontSize: 28 }}>📦</p>
+          <p style={{ fontSize: 13, color: C.textTer, marginTop: 8 }}>Todavía no marcas repetidas</p>
+        </div>
+      ) : Object.keys(grouped).length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <p style={{ fontSize: 13, color: C.textTer }}>Sin resultados</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {Object.entries(grouped).map(([code, stickers]) => {
+            const sec  = SECTIONS.find(s => s.id === code)
+            const team = TEAM_LIST.find(t => t.code === code)
+            return (
+              <div key={code}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: C.textSec }}>{code}</span>
+                  <span style={{ fontSize: 10, color: C.textTer }}>{sec?.name || team?.name}</span>
+                  <span style={{ fontSize: 10, color: C.textTer, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{stickers.reduce((a, s) => a + (dupes[s.id] || 0), 0)}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {stickers.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: 'rgba(0,0,0,0.03)', borderRadius: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0, background: s.isRare ? C.accent : C.success, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                        <span style={{ fontSize: 7, fontWeight: 700, opacity: 0.75, letterSpacing: '0.06em' }}>{s.id.split('-')[0]}</span>
+                        <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1 }}>{s.num}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: 12, color: C.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</p>
+                        <p style={{ fontSize: 10, color: C.textTer, marginTop: 2, fontFamily: 'monospace' }}>{s.id}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                        <button onClick={() => removeDupe(s.id)}
+                          style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, background: 'rgba(220,38,38,0.12)', color: C.error, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                        <span style={{ minWidth: 22, textAlign: 'center', fontSize: 13, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{dupes[s.id] || 0}</span>
+                        <button onClick={() => addDupe(s.id)}
+                          style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, background: C.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
     </div>
   )
 }
@@ -521,31 +734,31 @@ function FaltanContent({ allStickers, owned, toggle }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Stats */}
       <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
-          <p style={{ fontSize: 22, fontWeight: 900, color: '#111', lineHeight: 1, margin: 0 }}>{missing.length}</p>
-          <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>Pendientes</p>
+        <div style={{ flex: 1, background: '#ffffff', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: C.error, lineHeight: 1, margin: 0 }}>{missing.length}</p>
+          <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>Pendientes</p>
         </div>
-        <div style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
-          <p style={{ fontSize: 22, fontWeight: 900, color: C.emerald, lineHeight: 1, margin: 0 }}>{allStickers.length - missing.length}</p>
-          <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>Conseguidas</p>
+        <div style={{ flex: 1, background: '#ffffff', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: C.success, lineHeight: 1, margin: 0 }}>{allStickers.length - missing.length}</p>
+          <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>Conseguidas</p>
         </div>
       </div>
 
       {/* Search */}
       <div style={{ position: 'relative' }}>
-        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#bbb', pointerEvents: 'none' }}
+        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: C.textSec, pointerEvents: 'none' }}
           width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
         <input type="search" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Buscar equipo o número…"
-          style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px 10px 34px', outline: 'none', background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
-          onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+          style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px 10px 34px', outline: 'none', background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', color: C.text, boxSizing: 'border-box', transition: 'border-color 0.15s' }}
+          onFocus={e => e.target.style.borderColor = 'rgba(27,58,140,0.4)'}
           onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
       </div>
 
       {search.trim() && (
-        <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>{filteredTotal} resultado{filteredTotal !== 1 ? 's' : ''}</p>
+        <p style={{ fontSize: 11, color: C.textTer, margin: 0 }}>{filteredTotal} resultado{filteredTotal !== 1 ? 's' : ''}</p>
       )}
 
       {/* Grid grouped by section */}
@@ -553,7 +766,7 @@ function FaltanContent({ allStickers, owned, toggle }) {
         {Object.keys(grouped).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <p style={{ fontSize: 22 }}>🎉</p>
-            <p style={{ fontSize: 13, color: '#ccc', marginTop: 8 }}>{search ? 'Sin resultados' : '¡Álbum completo!'}</p>
+            <p style={{ fontSize: 13, color: C.textSec, marginTop: 8 }}>{search ? 'Sin resultados' : '¡Álbum completo!'}</p>
           </div>
         ) : (
           Object.entries(grouped).map(([code, stickers]) => {
@@ -562,9 +775,9 @@ function FaltanContent({ allStickers, owned, toggle }) {
             return (
               <div key={code}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: '#555' }}>{code}</span>
-                  <span style={{ fontSize: 10, color: '#bbb' }}>{sec?.name || team?.name}</span>
-                  <span style={{ fontSize: 10, color: '#ddd', marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{stickers.length}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: C.textSec }}>{code}</span>
+                  <span style={{ fontSize: 10, color: C.textSec }}>{sec?.name || team?.name}</span>
+                  <span style={{ fontSize: 10, color: C.textSec, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{stickers.length}</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
                   {stickers.map(s => (
@@ -577,13 +790,13 @@ function FaltanContent({ allStickers, owned, toggle }) {
         )}
       </div>
 
-      <p style={{ fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 4 }}>Toca una estampa para marcarla como conseguida</p>
+      <p style={{ fontSize: 11, color: C.textSec, textAlign: 'center', marginTop: 4 }}>Toca una estampa para marcarla como conseguida</p>
     </div>
   )
 }
 
 // ─── Panel: Amigos ────────────────────────────────────────────────────────────
-function AmigosContent({ user }) {
+function AmigosContent({ user, dupes = {} }) {
   const [friends,   setFriends]   = useState([])
   const [loading,   setLoading]   = useState(true)
   const [addInput,  setAddInput]  = useState('')
@@ -592,7 +805,7 @@ function AmigosContent({ user }) {
   const [selected,  setSelected]  = useState(null)
 
   function avatarColor(str) {
-    const palette = [C.purple, C.teal, '#f59e0b', '#3b82f6', '#ec4899', '#10b981', C.red]
+    const palette = [C.primary, C.primary, '#f59e0b', '#3b82f6', '#ec4899', '#10b981', C.error]
     let h = 0; for (const c of (str || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffff
     return palette[h % palette.length]
   }
@@ -638,9 +851,30 @@ function AmigosContent({ user }) {
     const grouped        = {}
     missing.forEach(s => { if (!grouped[s.section]) grouped[s.section] = []; grouped[s.section].push(s) })
 
+    const matchSet = new Set(missing.filter(s => (dupes[s.id] || 0) > 0).map(s => s.id))
+    const matchCount = matchSet.size
+
+    function buildTradeText() {
+      const items = missing.filter(s => matchSet.has(s.id))
+      const byTeam = {}
+      items.forEach(s => {
+        if (!byTeam[s.section]) byTeam[s.section] = []
+        byTeam[s.section].push({ num: s.num, count: dupes[s.id] || 0 })
+      })
+      const order = ['FWC', 'CC', ...TEAM_LIST.map(t => t.code)]
+      const lines = order.filter(c => byTeam[c]).map(c => {
+        const xs = byTeam[c].sort((a, b) => a.num - b.num).map(x => x.count > 1 ? `${x.num} (×${x.count})` : `${x.num}`)
+        return `${c}: ${xs.join(', ')}`
+      })
+      return `Hola ${name}, tengo ${matchCount} estampa${matchCount === 1 ? '' : 's'} repetida${matchCount === 1 ? '' : 's'} que te faltan del Mundial 2026:\n\n` + lines.join('\n') + '\n\n¿Hacemos cambio?'
+    }
+    function sendTradeWa() {
+      window.open(`https://wa.me/?text=${encodeURIComponent(buildTradeText())}`, '_blank')
+    }
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#888', fontSize: 13, fontWeight: 600 }}>
+        <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: C.textTer, fontSize: 13, fontWeight: 600 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           Volver
         </button>
@@ -650,45 +884,63 @@ function AmigosContent({ user }) {
             {name.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: 15, color: '#111', margin: 0 }}>{name}</p>
-            <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{selected.email}</p>
+            <p style={{ fontWeight: 700, fontSize: 15, color: C.text, margin: 0 }}>{name}</p>
+            <p style={{ fontSize: 11, color: C.textTer, marginTop: 2 }}>{selected.email}</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          {[{ val: `${pct}%`, label: 'Completado', clr: color }, { val: missing.length, label: 'Le faltan', clr: '#111' }].map(({ val, label, clr }) => (
-            <div key={label} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
-              <p style={{ fontSize: 22, fontWeight: 900, color: clr, lineHeight: 1, margin: 0 }}>{val}</p>
-              <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
+          {[
+            { val: `${pct}%`,        label: 'Completado', clr: color },
+            { val: missing.length,   label: 'Le faltan',  clr: '#ffffff' },
+            { val: matchCount,       label: 'Le sirven',  clr: matchCount > 0 ? C.accent : C.textSec },
+          ].map(({ val, label, clr }) => (
+            <div key={label} style={{ flex: 1, background: '#ffffff', borderRadius: 12, padding: '10px 14px' }}>
+              <p style={{ fontSize: 20, fontWeight: 900, color: clr, lineHeight: 1, margin: 0 }}>{val}</p>
+              <p style={{ fontSize: 10, color: C.textTer, marginTop: 3 }}>{label}</p>
             </div>
           ))}
         </div>
 
-        <div style={{ height: 6, background: 'rgba(0,0,0,0.07)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: 6, background: 'rgba(0,0,0,0.06)', borderRadius: 4, overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s' }} />
         </div>
+
+        {matchCount > 0 && (
+          <div style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)', borderRadius: 12, padding: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: C.accent, margin: 0 }}>Tienes {matchCount} repetida{matchCount === 1 ? '' : 's'} que le sirve{matchCount === 1 ? '' : 'n'}</p>
+            <p style={{ fontSize: 11, color: C.textSec, margin: '4px 0 10px', lineHeight: 1.5 }}>Las estampas con borde dorado abajo son las que le faltan y tú tienes repetidas.</p>
+            <button onClick={sendTradeWa}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#fff', background: '#25D366', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+              Mandar lista de cambio
+            </button>
+          </div>
+        )}
 
         {missing.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <p style={{ fontSize: 28 }}>🎉</p>
-            <p style={{ fontSize: 13, color: '#aaa', marginTop: 8 }}>¡Tiene el álbum completo!</p>
+            <p style={{ fontSize: 13, color: C.textTer, marginTop: 8 }}>¡Tiene el álbum completo!</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 11, color: '#bbb', margin: 0 }}>Estampas que le faltan</p>
+            <p style={{ fontSize: 11, color: C.textSec, margin: 0 }}>Estampas que le faltan</p>
             {Object.entries(grouped).map(([code, stickers]) => {
               const sec = SECTIONS.find(s => s.id === code)
               const team = TEAM_LIST.find(t => t.code === code)
+              const sectionMatches = stickers.filter(s => matchSet.has(s.id)).length
               return (
                 <div key={code}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: '#555' }}>{code}</span>
-                    <span style={{ fontSize: 10, color: '#bbb' }}>{sec?.name || team?.name}</span>
-                    <span style={{ fontSize: 10, color: '#ddd', marginLeft: 'auto' }}>{stickers.length}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: C.textSec }}>{code}</span>
+                    <span style={{ fontSize: 10, color: C.textSec }}>{sec?.name || team?.name}</span>
+                    {sectionMatches > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: C.accent, padding: '1px 6px', borderRadius: 4, background: 'rgba(217,119,6,0.12)' }}>{sectionMatches} le sirven</span>}
+                    <span style={{ fontSize: 10, color: C.textSec, marginLeft: 'auto' }}>{stickers.length}</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
                     {stickers.map(s => (
-                      <StickerTile key={s.id} sticker={s} owned={friendOwned} onMouseDown={() => {}} onMouseEnter={() => {}} />
+                      <StickerTile key={s.id} sticker={s} owned={friendOwned} isMatch={matchSet.has(s.id)} dupeCount={dupes[s.id] || 0} onMouseDown={() => {}} onMouseEnter={() => {}} />
                     ))}
                   </div>
                 </div>
@@ -698,7 +950,7 @@ function AmigosContent({ user }) {
         )}
 
         <button onClick={() => handleUnfollow(selected.user_id)}
-          style={{ fontSize: 12, color: '#e53935', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', marginTop: 4 }}>
+          style={{ fontSize: 12, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', marginTop: 4 }}>
           Dejar de seguir
         </button>
       </div>
@@ -708,34 +960,34 @@ function AmigosContent({ user }) {
   // ── Vista lista ───────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
-        <p style={{ fontWeight: 600, fontSize: 13, color: '#111', margin: '0 0 3px' }}>Agregar amigo</p>
-        <p style={{ fontSize: 11, color: '#888', margin: '0 0 12px', lineHeight: 1.5 }}>Pide a tu amigo su link de "Compartir álbum" y pégalo aquí</p>
+      <div style={{ background: '#ffffff', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.06)' }}>
+        <p style={{ fontWeight: 600, fontSize: 13, color: C.text, margin: '0 0 3px' }}>Agregar amigo</p>
+        <p style={{ fontSize: 11, color: C.textTer, margin: '0 0 12px', lineHeight: 1.5 }}>Pide a tu amigo su link de "Compartir álbum" y pégalo aquí</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <input value={addInput} onChange={e => setAddInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()}
             placeholder="Pega el link aquí…"
-            style={{ flex: 1, fontSize: 12, borderRadius: 10, padding: '9px 12px', outline: 'none', background: '#fff', border: '1.5px solid rgba(0,0,0,0.1)', color: '#111', transition: 'border-color 0.15s' }}
-            onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+            style={{ flex: 1, fontSize: 12, borderRadius: 10, padding: '9px 12px', outline: 'none', background: '#ffffff', border: '1.5px solid rgba(0,0,0,0.1)', color: C.text, transition: 'border-color 0.15s' }}
+            onFocus={e => e.target.style.borderColor = 'rgba(27,58,140,0.4)'}
             onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
           <button onClick={handleAdd} disabled={addStatus === 'loading' || !addInput.trim()}
             style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#fff',
-              background: addStatus === 'success' ? C.emerald : !addInput.trim() || addStatus === 'loading' ? '#c4b5fd' : C.purple,
+              background: addStatus === 'success' ? C.success : !addInput.trim() || addStatus === 'loading' ? C.primaryHover : C.primary,
               border: 'none', cursor: addStatus === 'loading' ? 'not-allowed' : 'pointer' }}>
             {addStatus === 'success' ? '✓' : addStatus === 'loading' ? '…' : 'Agregar'}
           </button>
         </div>
-        {addError && <p style={{ fontSize: 11, color: '#e53935', marginTop: 8 }}>{addError}</p>}
+        {addError && <p style={{ fontSize: 11, color: '#DC2626', marginTop: 8 }}>{addError}</p>}
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 24 }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${C.purple}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${C.primary}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
         </div>
       ) : friends.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
           <p style={{ fontSize: 28 }}>👥</p>
-          <p style={{ fontSize: 13, color: '#bbb', marginTop: 8 }}>Todavía no sigues a nadie</p>
-          <p style={{ fontSize: 11, color: '#ddd', marginTop: 4, lineHeight: 1.5 }}>Agrega el link de un amigo para ver su progreso y faltantes</p>
+          <p style={{ fontSize: 13, color: C.textSec, marginTop: 8 }}>Todavía no sigues a nadie</p>
+          <p style={{ fontSize: 11, color: C.textSec, marginTop: 4, lineHeight: 1.5 }}>Agrega el link de un amigo para ver su progreso y faltantes</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -747,20 +999,20 @@ function AmigosContent({ user }) {
             const color = avatarColor(f.email)
             return (
               <button key={f.user_id} onClick={() => setSelected(f)}
-                style={{ width: '100%', textAlign: 'left', background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: 14, cursor: 'pointer' }}
-                onMouseOver={e => e.currentTarget.style.background = '#f3f3f5'}
-                onMouseOut={e  => e.currentTarget.style.background = '#fafafa'}>
+                style={{ width: '100%', textAlign: 'left', background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: 14, cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = '#F5F4F1'}
+                onMouseOut={e  => e.currentTarget.style.background = '#ffffff'}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
                     {name.slice(0, 2).toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 700, fontSize: 13, color: '#111', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</p>
-                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 1 }}>{total - owned.size} faltantes</p>
+                    <p style={{ fontWeight: 700, fontSize: 13, color: C.text, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</p>
+                    <p style={{ fontSize: 11, color: C.textTer, marginTop: 1 }}>{total - owned.size} faltantes</p>
                   </div>
                   <span style={{ fontSize: 15, fontWeight: 900, color, flexShrink: 0 }}>{pct}%</span>
                 </div>
-                <div style={{ height: 4, background: 'rgba(0,0,0,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'rgba(0,0,0,0.06)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
                 </div>
               </button>
@@ -814,14 +1066,14 @@ function PwaGuide({ onClose }) {
 
   const iosSteps = [
     { color: '#0a84ff', bg: 'rgba(10,132,255,0.1)',   icon: <SafariIcon />,   title: 'Abre esta página en Safari',          desc: 'No funciona en Chrome ni otros navegadores de iPhone' },
-    { color: C.purple,  bg: 'rgba(124,58,237,0.1)',   icon: <IosShareIcon />, title: 'Toca el botón de compartir',           desc: 'El ícono ↑ en la barra inferior de Safari' },
-    { color: C.teal,    bg: 'rgba(77,182,172,0.12)',  icon: <AddHomeIcon />,  title: 'Agregar a pantalla de inicio',         desc: 'Desliza hacia abajo en el menú y toca esa opción' },
-    { color: C.emerald, bg: 'rgba(22,163,74,0.1)',    icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
+    { color: C.primary, bg: 'rgba(27,58,140,0.08)',   icon: <IosShareIcon />, title: 'Toca el botón de compartir',           desc: 'El ícono ↑ en la barra inferior de Safari' },
+    { color: C.primary, bg: 'rgba(27,58,140,0.08)',   icon: <AddHomeIcon />,  title: 'Agregar a pantalla de inicio',         desc: 'Desliza hacia abajo en el menú y toca esa opción' },
+    { color: C.accent,  bg: 'rgba(212,175,55,0.10)',  icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
   ]
   const androidSteps = [
     { color: '#4285F4', bg: 'rgba(66,133,244,0.1)',   icon: <DotsIcon />,     title: 'Toca los tres puntos ⋮',               desc: 'Arriba a la derecha en Chrome' },
-    { color: C.teal,    bg: 'rgba(77,182,172,0.12)',  icon: <AddHomeIcon />,  title: 'Agregar a pantalla principal',         desc: 'Busca "Instalar aplicación" o "Agregar a pantalla principal"' },
-    { color: C.emerald, bg: 'rgba(22,163,74,0.1)',    icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
+    { color: C.primary, bg: 'rgba(27,58,140,0.08)',   icon: <AddHomeIcon />,  title: 'Agregar a pantalla principal',         desc: 'Busca "Instalar aplicación" o "Agregar a pantalla principal"' },
+    { color: C.accent,  bg: 'rgba(212,175,55,0.10)',  icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
   ]
   const steps = os === 'ios' ? iosSteps : androidSteps
 
@@ -830,32 +1082,32 @@ function PwaGuide({ onClose }) {
       <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
       <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
         onClick={() => dismiss(false)}>
-        <div style={{ width: '100%', maxWidth: 480, maxHeight: '94vh', overflowY: 'auto', background: '#fff', borderRadius: '22px 22px 0 0', animation: 'slideUp 0.32s cubic-bezier(0.32,0.72,0,1)' }}
+        <div style={{ width: '100%', maxWidth: 480, maxHeight: '94vh', overflowY: 'auto', background: '#ffffff', borderRadius: '22px 22px 0 0', animation: 'slideUp 0.32s cubic-bezier(0.32,0.72,0,1)' }}
           onClick={e => e.stopPropagation()}>
 
           {/* Color stripe */}
-          <div style={{ height: 4, background: C.strip, borderRadius: '22px 22px 0 0' }} />
+          <div style={{ height: 4, background: C.accentGrad, borderRadius: '22px 22px 0 0' }} />
 
           {/* Header */}
-          <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+          <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <img src="/icon.png" alt="" style={{ width: 46, height: 46, borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.14)' }} />
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: 17, color: '#111', lineHeight: 1, margin: 0 }}>Agrega la app</p>
-                  <p style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Sin internet, directo desde tu inicio</p>
+                  <p style={{ fontWeight: 800, fontSize: 17, color: C.text, lineHeight: 1, margin: 0 }}>Agrega la app</p>
+                  <p style={{ fontSize: 12, color: C.textTer, marginTop: 4 }}>Sin internet, directo desde tu inicio</p>
                 </div>
               </div>
-              <button onClick={() => dismiss(false)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+              <button onClick={() => dismiss(false)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer', fontSize: 18, color: C.textTer, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
             </div>
 
             {/* OS switcher */}
-            <div style={{ display: 'flex', background: '#f0f0f3', borderRadius: 10, padding: 3, gap: 2 }}>
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: 3, gap: 2 }}>
               {[{ id: 'ios', label: '📱 iPhone' }, { id: 'android', label: '🤖 Android' }].map(({ id, label }) => (
                 <button key={id} onClick={() => setOs(id)}
                   style={{ flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                    background: os === id ? '#fff' : 'transparent', color: os === id ? '#111' : '#999',
-                    boxShadow: os === id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+                    background: os === id ? C.primary : 'transparent', color: os === id ? '#ffffff' : C.textSec,
+                    boxShadow: os === id ? '0 1px 4px rgba(0,0,0,0.2)' : 'none' }}>
                   {label}
                 </button>
               ))}
@@ -870,12 +1122,12 @@ function PwaGuide({ onClose }) {
                   <div style={{ width: 46, height: 46, borderRadius: 14, background: step.bg, color: step.color, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${step.color}30`, flexShrink: 0 }}>
                     {step.icon}
                   </div>
-                  {i < steps.length - 1 && <div style={{ width: 2, height: 26, background: 'rgba(0,0,0,0.07)', borderRadius: 1, margin: '4px 0' }} />}
+                  {i < steps.length - 1 && <div style={{ width: 2, height: 26, background: 'rgba(0,0,0,0.06)', borderRadius: 1, margin: '4px 0' }} />}
                 </div>
                 <div style={{ paddingTop: 6, paddingBottom: i < steps.length - 1 ? 20 : 0 }}>
                   <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, color: step.color, background: step.bg, padding: '2px 7px', borderRadius: 4, marginBottom: 5, letterSpacing: '0.04em' }}>PASO {i + 1}</span>
-                  <p style={{ fontWeight: 700, fontSize: 14, color: '#111', margin: 0, lineHeight: 1.3 }}>{step.title}</p>
-                  <p style={{ fontSize: 12, color: '#777', marginTop: 4, lineHeight: 1.55 }}>{step.desc}</p>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: C.text, margin: 0, lineHeight: 1.3 }}>{step.title}</p>
+                  <p style={{ fontSize: 12, color: C.textTer, marginTop: 4, lineHeight: 1.55 }}>{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -883,10 +1135,10 @@ function PwaGuide({ onClose }) {
 
           {/* CTA */}
           <div style={{ padding: '12px 20px 32px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={() => dismiss(true)} style={{ width: '100%', padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => dismiss(true)} style={{ width: '100%', padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 14, color: '#fff', background: C.primary, border: 'none', cursor: 'pointer' }}>
               Entendido
             </button>
-            <button onClick={() => dismiss(false)} style={{ width: '100%', padding: 10, fontSize: 12, fontWeight: 500, color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => dismiss(false)} style={{ width: '100%', padding: 10, fontSize: 12, fontWeight: 500, color: C.textSec, background: 'none', border: 'none', cursor: 'pointer' }}>
               Recordármelo después
             </button>
           </div>
@@ -897,24 +1149,25 @@ function PwaGuide({ onClose }) {
 }
 
 // ─── Side panel ───────────────────────────────────────────────────────────────
-function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, toggle }) {
-  const titles = { faltan: 'Faltantes', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift', amigos: 'Amigos' }
+function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, dupes, toggle, addDupe, removeDupe }) {
+  const titles = { faltan: 'Faltantes', repetidas: 'Repetidas', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift', amigos: 'Amigos' }
   return (
     <>
       <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
       <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} onClick={onClose}>
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 440, background: '#fff', display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.26s ease-out', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-          <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
-            <h2 style={{ fontWeight: 800, fontSize: 18, color: '#111', margin: 0 }}>{titles[page]}</h2>
-            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 440, background: '#ffffff', display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.26s ease-out', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#ffffff', zIndex: 10 }}>
+            <h2 style={{ fontWeight: 800, fontSize: 18, color: C.text, margin: 0 }}>{titles[page]}</h2>
+            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer', fontSize: 18, color: C.textTer, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
           </div>
           <div style={{ flex: 1, padding: 20 }}>
             {page === 'faltan'    && <FaltanContent allStickers={allStickers} owned={owned} toggle={toggle} />}
-            {page === 'exportar'  && <ExportarContent allStickers={allStickers} owned={owned} />}
+            {page === 'repetidas' && <RepetidasContent allStickers={allStickers} dupes={dupes} addDupe={addDupe} removeDupe={removeDupe} />}
+            {page === 'exportar'  && <ExportarContent allStickers={allStickers} owned={owned} dupes={dupes} />}
             {page === 'compartir' && <CompartirContent user={user} albumOwnerId={albumOwnerId} />}
             {page === 'shift'     && <ShiftContent />}
-            {page === 'amigos'    && <AmigosContent user={user} />}
+            {page === 'amigos'    && <AmigosContent user={user} dupes={dupes} />}
           </div>
         </div>
       </div>
@@ -933,11 +1186,12 @@ function HamburgerMenu({ onOpen, onInstall }) {
   }, [])
   const items = [
     { id: 'faltan',    label: 'Faltantes',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { id: 'repetidas', label: 'Repetidas',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg> },
     { id: 'amigos',    label: 'Amigos',          icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
     { id: 'exportar',  label: 'Exportar',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
     { id: 'compartir', label: 'Compartir',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
     { id: 'instalar',  label: 'Agregar como app', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><polyline points="9 6 12 3 15 6"/><line x1="12" y1="3" x2="12" y2="14"/></svg> },
-    { id: 'shift',     label: 'Shift',            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>, gold: true },
+    { id: 'shift',     label: 'Shift',            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>, gold: true },
   ]
   function handleItem(id) {
     setOpen(false)
@@ -947,15 +1201,15 @@ function HamburgerMenu({ onOpen, onInstall }) {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(o => !o)}
-        style={{ width: 36, height: 36, borderRadius: 10, background: open ? 'rgba(0,0,0,0.11)' : 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-        {[0,1,2].map(i => <div key={i} style={{ width: 14, height: 1.5, background: '#555', borderRadius: 1 }} />)}
+        style={{ width: 36, height: 36, borderRadius: 10, background: open ? 'rgba(0,0,0,0.11)' : 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        {[0,1,2].map(i => <div key={i} style={{ width: 14, height: 1.5, background: C.duplicate, borderRadius: 1 }} />)}
       </button>
       {open && (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 180, zIndex: 40 }}>
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#ffffff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 180, zIndex: 40 }}>
           {items.map((item, i) => (
             <button key={item.id} onClick={() => handleItem(item.id)}
-              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: item.gold ? 'rgba(217,119,6,0.06)' : 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', fontSize: 13, fontWeight: 600, color: item.gold ? C.gold : '#333', cursor: 'pointer' }}
-              onMouseOver={e => e.currentTarget.style.background = item.gold ? 'rgba(217,119,6,0.12)' : '#f8f8f8'}
+              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: item.gold ? 'rgba(217,119,6,0.06)' : 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.08)' : 'none', fontSize: 13, fontWeight: 600, color: item.gold ? C.accent : C.primary, cursor: 'pointer' }}
+              onMouseOver={e => e.currentTarget.style.background = item.gold ? 'rgba(217,119,6,0.12)' : 'rgba(27,58,140,0.08)'}
               onMouseOut={e  => e.currentTarget.style.background = item.gold ? 'rgba(217,119,6,0.06)' : 'transparent'}>
               {item.icon}{item.label}
             </button>
@@ -971,42 +1225,105 @@ function CocaModal({ onChoice }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.5)' }}>
       <div className="surface" style={{ width: '100%', maxWidth: 340, padding: 24 }}>
-        <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, color: '#999', marginBottom: 4 }}>Sección especial</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, color: '#111', marginBottom: 8, lineHeight: 1.3 }}>¿Tu álbum incluye la sección Coca-Cola?</h2>
-        <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 24 }}>Esta sección especial (CC-1 a CC-14) viene en versiones regionales del álbum con estampas exclusivas.</p>
+        <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, color: C.textTer, marginBottom: 4 }}>Sección especial</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, color: C.text, marginBottom: 8, lineHeight: 1.3 }}>¿Tu álbum incluye la sección <span style={{ color: C.coke }}>Coca-Cola</span>?</h2>
+        <p style={{ fontSize: 13, color: C.textTer, lineHeight: 1.6, marginBottom: 24 }}>Esta sección especial (CC-1 a CC-14) viene en versiones regionales del álbum con estampas exclusivas.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button onClick={() => onChoice(true)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>Sí, mi álbum la incluye</button>
-          <button onClick={() => onChoice(false)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: '#666', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer' }}>No, mi álbum no la tiene</button>
+          <button onClick={() => onChoice(true)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: '#fff', background: C.coke, border: 'none', cursor: 'pointer' }}>Sí, mi álbum la incluye</button>
+          <button onClick={() => onChoice(false)} style={{ padding: '12px', borderRadius: 12, fontWeight: 600, fontSize: 13, color: C.textTer, background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer' }}>No, mi álbum no la tiene</button>
         </div>
       </div>
     </div>
   )
 }
 
-// ─── Sticker tile ─────────────────────────────────────────────────────────────
-function StickerTile({ sticker, owned, onMouseDown, onMouseEnter }) {
-  const isOwned = owned.has(sticker.id)
-  let bg, text, outline
-  if (isOwned && sticker.isRare)   { bg = C.gold;                text = '#fff';    outline = 'none' }
-  else if (isOwned)                { bg = C.emerald;             text = '#fff';    outline = 'none' }
-  else if (sticker.isRare)         { bg = '#fef3c7';             text = '#b45309'; outline = '1px solid #fde68a' }
-  else                             { bg = 'rgba(0,0,0,0.06)';   text = '#aaa';    outline = 'none' }
+// ─── Sticker action menu (tap on owned tile) ─────────────────────────────────
+function StickerActionMenu({ sticker, dupeCount, onAddDupe, onRemoveDupe, onUnmark, onClose }) {
   return (
-    <div onMouseDown={() => onMouseDown(sticker.id)} onMouseEnter={() => onMouseEnter(sticker.id)}
-      title={`${sticker.id} — ${sticker.label}${sticker.isRare ? ' · ESPECIAL' : ''}`}
-      style={{ background: bg, color: text, cursor: 'pointer', borderRadius: 6, outline, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', transition: 'transform 0.05s' }}
+    <>
+      <style>{`@keyframes menuIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}`}</style>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.55)' }} onClick={onClose}>
+        <div className="surface" style={{ width: '100%', maxWidth: 320, padding: 20, animation: 'menuIn 0.18s ease-out' }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 10, flexShrink: 0, background: sticker.isRare ? C.accent : C.success, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+              <span style={{ fontSize: 8, fontWeight: 700, opacity: 0.75, letterSpacing: '0.06em' }}>{sticker.id.split('-')[0]}</span>
+              <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{sticker.num}</span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontWeight: 700, fontSize: 13, color: C.text, margin: 0, lineHeight: 1.3 }}>{sticker.label}</p>
+              <p style={{ fontSize: 11, color: C.textTer, marginTop: 2, fontFamily: 'monospace' }}>{sticker.id}{sticker.isRare ? ' · ESPECIAL' : ''}</p>
+            </div>
+          </div>
+
+          <div style={{ background: '#F5F4F1', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: C.textTer, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Repetidas</p>
+                <p style={{ fontSize: 22, fontWeight: 900, color: C.text, lineHeight: 1, marginTop: 4 }}>{dupeCount}</p>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={onRemoveDupe} disabled={dupeCount === 0}
+                  style={{ width: 38, height: 38, borderRadius: 10, border: 'none', cursor: dupeCount === 0 ? 'not-allowed' : 'pointer', fontSize: 18, fontWeight: 700, background: dupeCount === 0 ? '#F5F4F1' : 'rgba(220,38,38,0.12)', color: dupeCount === 0 ? C.duplicate : C.error, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                <button onClick={onAddDupe}
+                  style={{ width: 38, height: 38, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 700, background: C.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+              </div>
+            </div>
+          </div>
+
+          <button onClick={onUnmark}
+            style={{ width: '100%', padding: 11, borderRadius: 10, fontSize: 12, fontWeight: 600, color: C.error, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', cursor: 'pointer' }}>
+            Quitar del álbum
+          </button>
+          <button onClick={onClose}
+            style={{ width: '100%', padding: 9, marginTop: 6, fontSize: 12, fontWeight: 500, color: C.textTer, background: 'none', border: 'none', cursor: 'pointer' }}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Sticker tile ─────────────────────────────────────────────────────────────
+function StickerTile({ sticker, owned, dupeCount = 0, isMatch = false, onMouseDown, onMouseEnter, onClick }) {
+  const isOwned = owned.has(sticker.id)
+  const isCoke  = sticker.section === 'CC'
+  let bg, text, outline
+  if (isOwned && isCoke)           { bg = C.coke;                  text = '#fff';    outline = 'none' }
+  else if (isOwned && sticker.isRare) { bg = C.accent;             text = '#fff';    outline = 'none' }
+  else if (isOwned)                { bg = C.success;               text = '#fff';    outline = 'none' }
+  else if (isCoke)                 { bg = C.cokeSoft;              text = C.coke;    outline = `1px solid rgba(209,36,33,0.25)` }
+  else if (sticker.isRare)         { bg = 'rgba(212,175,55,0.15)'; text = C.accent;  outline = '1px solid rgba(212,175,55,0.35)' }
+  else                             { bg = 'rgba(220,38,38,0.08)';  text = C.pending; outline = 'none' }
+  if (isMatch) outline = `2px solid ${C.accent}`
+  return (
+    <div onMouseDown={() => onMouseDown && onMouseDown(sticker.id)}
+      onMouseEnter={() => onMouseEnter && onMouseEnter(sticker.id)}
+      onClick={() => onClick && onClick(sticker.id)}
+      title={`${sticker.id} — ${sticker.label}${sticker.isRare ? ' · ESPECIAL' : ''}${dupeCount > 0 ? ` · ${dupeCount} repetida${dupeCount > 1 ? 's' : ''}` : ''}${isMatch ? ' · LE SIRVE' : ''}`}
+      style={{ position: 'relative', background: bg, color: text, cursor: 'pointer', borderRadius: 6, outline, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', transition: 'transform 0.05s' }}
       onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.zIndex = 10 }}
       onMouseOut={e  => { e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = '' }}>
       <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.06em', opacity: 0.65, lineHeight: 1 }}>{sticker.id.split('-')[0]}</span>
       <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, marginTop: 1 }}>{sticker.num}</span>
+      {dupeCount > 0 && (
+        <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 14, height: 14, borderRadius: 7, background: C.text, color: '#fff', fontSize: 8, fontWeight: 800, padding: '0 3px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+          +{dupeCount}
+        </span>
+      )}
     </div>
   )
 }
 
-function StickerGrid({ stickers, owned, onMouseDown, onMouseEnter }) {
+function StickerGrid({ stickers, owned, dupes = {}, matchSet, onMouseDown, onMouseEnter, onClick }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
-      {stickers.map(s => <StickerTile key={s.id} sticker={s} owned={owned} onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} />)}
+      {stickers.map(s => (
+        <StickerTile key={s.id} sticker={s} owned={owned}
+          dupeCount={dupes[s.id] || 0}
+          isMatch={matchSet?.has(s.id)}
+          onMouseDown={onMouseDown} onMouseEnter={onMouseEnter} onClick={onClick} />
+      ))}
     </div>
   )
 }
@@ -1014,15 +1331,17 @@ function StickerGrid({ stickers, owned, onMouseDown, onMouseEnter }) {
 // ─── Desktop sidebar nav ──────────────────────────────────────────────────────
 function SectionNav({ allStickers, owned, active, onSelect, hasCoca }) {
   const groups = ['A','B','C','D','E','F','G','H','I','J','K','L']
-  function NavItem({ id, label, count, total }) {
+  function NavItem({ id, label, count, total, tint }) {
     const isActive = active === id
     const full = total > 0 && count === total
+    const activeColor = tint || C.primary
+    const activeBg = tint ? `${tint}15` : 'rgba(27,58,140,0.09)'
     return (
       <button onClick={() => onSelect(id)}
-        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10, background: isActive ? 'rgba(124,58,237,0.09)' : 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.1s' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', width: 36, flexShrink: 0, color: isActive ? C.purple : '#888' }}>{id === 'all' ? 'ALL' : id}</span>
-        <span style={{ flex: 1, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isActive ? '#111' : '#555', fontWeight: isActive ? 600 : 400 }}>{label}</span>
-        {total > 0 && <span style={{ fontSize: 10, fontVariantNumeric: 'tabular-nums', flexShrink: 0, color: full ? C.emerald : '#bbb', fontWeight: full ? 700 : 400 }}>{count}/{total}</span>}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10, background: isActive ? activeBg : 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.1s' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', width: 36, flexShrink: 0, color: isActive ? activeColor : tint || C.textSec }}>{id === 'all' ? 'ALL' : id}</span>
+        <span style={{ flex: 1, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isActive ? activeColor : tint || '#bbbbbb', fontWeight: isActive ? 600 : 400 }}>{label}</span>
+        {total > 0 && <span style={{ fontSize: 10, fontVariantNumeric: 'tabular-nums', flexShrink: 0, color: full ? C.accent : tint || C.textSec, fontWeight: full ? 700 : 400 }}>{count}/{total}</span>}
       </button>
     )
   }
@@ -1034,13 +1353,13 @@ function SectionNav({ allStickers, owned, active, onSelect, hasCoca }) {
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', maxHeight: 'calc(100vh - 8rem)' }}>
       <NavItem id="all" label="Todo el álbum" count={allCount} total={allStickers.length} />
       <NavItem id="FWC" label="Especiales FWC" count={fwcCount} total={fwcTotal} />
-      {hasCoca && <NavItem id="CC" label="Coca-Cola" count={ccCount} total={14} />}
-      <div style={{ margin: '6px 0', borderTop: '1px solid rgba(0,0,0,0.07)' }} />
+      {hasCoca && <NavItem id="CC" label="Coca-Cola" count={ccCount} total={14} tint={C.coke} />}
+      <div style={{ margin: '6px 0', borderTop: '1px solid rgba(0,0,0,0.06)' }} />
       {groups.map(g => {
         const teams = TEAM_LIST.filter(t => t.group === g)
         return (
           <div key={g}>
-            <p style={{ padding: '4px 12px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb' }}>Grupo {g}</p>
+            <p style={{ padding: '4px 12px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.textSec }}>Grupo {g}</p>
             {teams.map(team => {
               const ts = allStickers.filter(s => s.section === team.code)
               const h  = ts.filter(s => owned.has(s.id)).length
@@ -1054,13 +1373,20 @@ function SectionNav({ allStickers, owned, active, onSelect, hasCoca }) {
 }
 
 // ─── Album tab ────────────────────────────────────────────────────────────────
-function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, onToggleCoca, onRareFound }) {
+function AlbumTab({ allStickers, owned, dupes, toggle, addMany, removeMany, addDupe, removeDupe, hasCoca, onToggleCoca, onRareFound }) {
   const [activeSection, setActiveSection] = useState('all')
   const [bulkInput, setBulkInput] = useState('')
   const [bulkMode,  setBulkMode]  = useState('add')
   const [feedback,  setFeedback]  = useState('')
-  const dragging   = useRef(false)
-  const dragAction = useRef(null)
+  const [dupeToast,  setDupeToast]  = useState(null)
+  const dragging        = useRef(false)
+  const dragAction      = useRef(null)
+  const dragStarted     = useRef(false)
+  const downId          = useRef(null)
+  const wasOwnedAtDown  = useRef(false)
+  const lastTapTime     = useRef(0)
+  const lastTapId       = useRef(null)
+  const singleTapTimer  = useRef(null)
 
   const visibleStickers = useMemo(() =>
     activeSection === 'all' ? allStickers : allStickers.filter(s => s.section === activeSection),
@@ -1071,7 +1397,7 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
   const pct   = total ? Math.round((have / total) * 100) : 0
   const activeSec   = SECTIONS.find(s => s.id === activeSection)
   const isCC        = activeSection === 'CC'
-  const accentColor = isCC ? C.red : C.purple
+  const accentColor = isCC ? C.coke : pct === 100 ? C.accent : C.primary
 
   function flash(msg) { setFeedback(msg); setTimeout(() => setFeedback(''), 2500) }
 
@@ -1091,24 +1417,65 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
     flash(`${ids.length} estampas ${val ? 'marcadas' : 'desmarcadas'}`)
   }
 
+  function clearSingleTap() {
+    if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null }
+  }
   function handleMouseDown(id) {
     const wasOwned = owned.has(id)
     dragging.current = true
+    dragStarted.current = false
+    downId.current = id
     dragAction.current = wasOwned ? 'remove' : 'add'
-    toggle(id)
+    wasOwnedAtDown.current = wasOwned
     if (!wasOwned) {
+      toggle(id)
       const s = allStickers.find(s => s.id === id)
       if (s?.isRare) onRareFound(s)
     }
+    // Owned: don't toggle here. Click handler does single-vs-double-tap.
   }
   function handleMouseEnter(id) {
     if (!dragging.current) return
+    clearSingleTap()
+    if (!dragStarted.current && downId.current && downId.current !== id) {
+      dragStarted.current = true
+      if (dragAction.current === 'remove' && owned.has(downId.current)) toggle(downId.current)
+    }
     if (dragAction.current === 'add' && !owned.has(id)) {
       toggle(id)
       const s = allStickers.find(s => s.id === id)
       if (s?.isRare) onRareFound(s)
     }
     if (dragAction.current === 'remove' && owned.has(id)) toggle(id)
+  }
+  function handleClick(id) {
+    if (dragStarted.current) return
+    // mousedown was on unowned → already marked; click does nothing
+    if (!wasOwnedAtDown.current) return
+
+    const now = Date.now()
+    const isDoubleTap = lastTapId.current === id && (now - lastTapTime.current) < 320
+
+    if (isDoubleTap) {
+      // Cancel scheduled unmark, add repetida instead
+      clearSingleTap()
+      addDupe(id)
+      const s = allStickers.find(s => s.id === id)
+      if (s) setDupeToast(s)
+      lastTapId.current = null
+      lastTapTime.current = 0
+      return
+    }
+
+    // First tap on owned: schedule the unmark in case no second tap arrives
+    lastTapId.current = id
+    lastTapTime.current = now
+    clearSingleTap()
+    singleTapTimer.current = setTimeout(() => {
+      toggle(id)
+      singleTapTimer.current = null
+      lastTapId.current = null
+    }, 280)
   }
   function stopDrag() { dragging.current = false; dragAction.current = null }
 
@@ -1122,7 +1489,7 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
   return (
     <div className="lg:flex lg:gap-5">
       <aside className="hidden lg:block lg:w-52 xl:w-60 flex-shrink-0">
-        <div className="surface p-2 sticky top-24" style={{ background: '#fafafa' }}>
+        <div className="surface p-2 sticky top-24" style={{ background: '#ffffff' }}>
           <SectionNav allStickers={allStickers} owned={owned} active={activeSection} onSelect={setActiveSection} hasCoca={hasCoca} />
         </div>
       </aside>
@@ -1133,14 +1500,14 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
           {[{ id: 'all', label: 'Todo' }, { id: 'FWC', label: 'FWC' }].map(({ id, label }) => (
             <button key={id} onClick={() => setActiveSection(id)}
               className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold"
-              style={{ background: activeSection === id ? C.purple : 'rgba(0,0,0,0.07)', color: activeSection === id ? '#fff' : '#555', border: 'none', cursor: 'pointer' }}>
+              style={{ background: activeSection === id ? C.primary : 'rgba(0,0,0,0.06)', color: activeSection === id ? '#fff' : C.textTer, border: 'none', cursor: 'pointer' }}>
               {label}
             </button>
           ))}
           {hasCoca && (
             <button onClick={() => setActiveSection('CC')}
               className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold"
-              style={{ background: activeSection === 'CC' ? C.red : 'rgba(229,57,53,0.1)', color: activeSection === 'CC' ? '#fff' : C.red, border: 'none', cursor: 'pointer' }}>CC</button>
+              style={{ background: activeSection === 'CC' ? C.coke : C.cokeSoft, color: activeSection === 'CC' ? '#fff' : C.coke, border: 'none', cursor: 'pointer' }}>CC</button>
           )}
           <div className="flex-shrink-0 w-px mx-0.5" style={{ background: 'rgba(0,0,0,0.1)' }} />
           {TEAM_LIST.map(team => {
@@ -1149,7 +1516,7 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
             return (
               <button key={team.code} onClick={() => setActiveSection(team.code)}
                 className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono"
-                style={{ background: activeSection === team.code ? C.purple : complete ? 'rgba(22,163,74,0.12)' : 'rgba(0,0,0,0.07)', color: activeSection === team.code ? '#fff' : complete ? C.emerald : '#555', border: 'none', cursor: 'pointer' }}>
+                style={{ background: activeSection === team.code ? C.primary : complete ? 'rgba(212,175,55,0.15)' : 'rgba(0,0,0,0.06)', color: activeSection === team.code ? '#fff' : complete ? C.accent : C.textTer, border: 'none', cursor: 'pointer' }}>
                 {team.code}
               </button>
             )
@@ -1160,14 +1527,14 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
         <div className="surface p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-bold text-base" style={{ color: '#111' }}>{activeSec?.name || activeSection}</h2>
-              <p className="text-sm mt-0.5" style={{ color: '#777' }}>{have} de {total}&ensp;·&ensp;<span style={{ color: accentColor, fontWeight: 700 }}>{pct}%</span></p>
+              <h2 className="font-bold text-base" style={{ color: C.text }}>{activeSec?.name || activeSection}</h2>
+              <p className="text-sm mt-0.5" style={{ color: C.textTer }}>{have} de {total}&ensp;·&ensp;<span style={{ color: accentColor, fontWeight: 700 }}>{pct}%</span></p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => markSection(true)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(22,163,74,0.1)', color: '#15803d', border: 'none', cursor: 'pointer' }}
+              <button onClick={() => markSection(true)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(22,163,74,0.1)', color: C.success, border: 'none', cursor: 'pointer' }}
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}>Marcar todas</button>
-              <button onClick={() => markSection(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.06)', color: '#666', border: 'none', cursor: 'pointer' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}>Limpiar</button>
+              <button onClick={() => markSection(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.08)', color: C.textTer, border: 'none', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}>Limpiar</button>
             </div>
           </div>
           <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
@@ -1177,37 +1544,37 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
 
         {/* Bulk input */}
         <div className="surface p-4">
-          <p className="text-[10px] uppercase tracking-widest font-bold mb-2.5" style={{ color: '#aaa' }}>Entrada rápida</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold mb-2.5" style={{ color: C.textTer }}>Entrada rápida</p>
           <div className="space-y-2">
             <input value={bulkInput} onChange={e => setBulkInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyBulk()}
               placeholder={hasCoca ? 'MEX 1-15,  ARG 3 5,  CC 1-14' : 'MEX 1-15,  ARG 3 5 10-18,  FWC 1-8'}
               className="w-full text-sm outline-none transition-colors rounded-xl px-4 py-2.5"
-              style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111' }}
-              onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.45)'}
+              style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', color: C.text }}
+              onFocus={e => e.target.style.borderColor = 'rgba(27,58,140,0.4)'}
               onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
             <div className="flex gap-2">
-              <select value={bulkMode} onChange={e => setBulkMode(e.target.value)} className="flex-1 rounded-xl px-3 py-2 text-sm outline-none" style={{ background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#444' }}>
+              <select value={bulkMode} onChange={e => setBulkMode(e.target.value)} className="flex-1 rounded-xl px-3 py-2 text-sm outline-none" style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', color: C.text }}>
                 <option value="add">Marcar</option>
                 <option value="remove">Desmarcar</option>
               </select>
-              <button onClick={applyBulk} className="flex-1 py-2 rounded-xl text-sm font-semibold text-white" style={{ background: C.purple, border: 'none', cursor: 'pointer' }}
-                onMouseOver={e => e.currentTarget.style.background = '#6d28d9'} onMouseOut={e => e.currentTarget.style.background = C.purple}>Aplicar</button>
+              <button onClick={applyBulk} className="flex-1 py-2 rounded-xl text-sm font-semibold text-white" style={{ background: C.primary, border: 'none', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = C.primaryHover} onMouseOut={e => e.currentTarget.style.background = C.primary}>Aplicar</button>
             </div>
           </div>
           {feedback
-            ? <p className="text-xs mt-2 font-semibold" style={{ color: C.purple }}>{feedback}</p>
-            : <p className="text-xs mt-2" style={{ color: '#bbb' }}>Arrastra sobre el tablero para marcar varias de un jalón</p>}
+            ? <p className="text-xs mt-2 font-semibold" style={{ color: C.primary }}>{feedback}</p>
+            : <p className="text-xs mt-2" style={{ color: C.textSec }}>Toca para marcar · arrastra para varias · doble-tap en marcada para +1 repetida</p>}
         </div>
 
         {/* Coca-Cola toggle */}
         <button onClick={onToggleCoca} className="w-full text-left surface-sm px-4 py-3 flex items-center justify-between"
-          style={{ border: 'none', cursor: 'pointer' }}
-          onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'} onMouseOut={e => e.currentTarget.style.background = '#fff'}>
+          style={{ border: hasCoca ? `1.5px solid rgba(209,36,33,0.25)` : undefined, background: hasCoca ? C.cokeSoft : undefined, cursor: 'pointer' }}
+          onMouseOver={e => e.currentTarget.style.background = hasCoca ? 'rgba(209,36,33,0.14)' : '#F5F4F1'} onMouseOut={e => e.currentTarget.style.background = hasCoca ? C.cokeSoft : '#ffffff'}>
           <div>
-            <p className="text-xs font-semibold" style={{ color: '#333' }}>Sección Coca-Cola (CC-1 a CC-14)</p>
-            <p className="text-xs mt-0.5" style={{ color: '#aaa' }}>{hasCoca ? 'Incluida — toca para desactivar' : 'No incluida — toca para activar'}</p>
+            <p className="text-xs font-semibold" style={{ color: C.coke }}>Sección Coca-Cola (CC-1 a CC-14)</p>
+            <p className="text-xs mt-0.5" style={{ color: C.textTer }}>{hasCoca ? 'Incluida — toca para desactivar' : 'No incluida — toca para activar'}</p>
           </div>
-          <div className="w-10 h-5 rounded-full relative flex-shrink-0 ml-4" style={{ background: hasCoca ? C.red : 'rgba(0,0,0,0.15)' }}>
+          <div className="w-10 h-5 rounded-full relative flex-shrink-0 ml-4" style={{ background: hasCoca ? C.coke : 'rgba(0,0,0,0.18)' }}>
             <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow" style={{ left: hasCoca ? '22px' : '2px', transition: 'left 0.2s' }} />
           </div>
         </button>
@@ -1215,8 +1582,8 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
         {/* Sticker grid */}
         <div className="surface p-4 select-none" onMouseUp={stopDrag} onMouseLeave={stopDrag}>
           {isCC && (
-            <div className="mb-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(229,57,53,0.07)', border: '1px solid rgba(229,57,53,0.2)' }}>
-              <p className="text-xs font-medium" style={{ color: C.red }}>Estampas exclusivas Coca-Cola — disponibles solo en productos participantes</p>
+            <div className="mb-3 px-3 py-2 rounded-xl" style={{ background: C.cokeSoft, border: `1px solid rgba(209,36,33,0.25)` }}>
+              <p className="text-xs font-medium" style={{ color: C.coke }}>Estampas exclusivas Coca-Cola — disponibles solo en productos participantes</p>
             </div>
           )}
           {grouped ? (
@@ -1227,33 +1594,41 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
                 const h     = stickers.filter(s => owned.has(s.id)).length
                 const pctS  = Math.round((h / stickers.length) * 100)
                 const sIsCC = code === 'CC'
+                const barColor = sIsCC ? C.coke : pctS === 100 ? C.accent : C.primary
+                const numColor = sIsCC ? C.coke : pctS === 100 ? C.accent : C.textTer
                 return (
                   <div key={code}>
                     <div className="flex items-center gap-3 mb-2.5">
-                      <span className="text-xs font-bold font-mono tracking-wider" style={{ color: '#444' }}>{code}</span>
-                      <span className="text-xs" style={{ color: '#aaa' }}>{sec?.name || team?.name}</span>
+                      <span className="text-xs font-bold font-mono tracking-wider" style={{ color: sIsCC ? C.coke : C.text }}>{code}</span>
+                      <span className="text-xs" style={{ color: sIsCC ? C.coke : C.textTer }}>{sec?.name || team?.name}</span>
                       <div className="flex-1 rounded-full h-1 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-                        <div className="h-1 rounded-full" style={{ width: `${pctS}%`, background: pctS === 100 ? C.emerald : sIsCC ? C.red : C.purple, transition: 'width 0.3s' }} />
+                        <div className="h-1 rounded-full" style={{ width: `${pctS}%`, background: barColor, transition: 'width 0.3s' }} />
                       </div>
-                      <span className="text-xs tabular-nums" style={{ color: pctS === 100 ? C.emerald : '#bbb', fontWeight: pctS === 100 ? 700 : 400 }}>{h}/{stickers.length}</span>
+                      <span className="text-xs tabular-nums" style={{ color: numColor, fontWeight: pctS === 100 || sIsCC ? 700 : 400 }}>{h}/{stickers.length}</span>
                     </div>
-                    <StickerGrid stickers={stickers} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
+                    <StickerGrid stickers={stickers} owned={owned} dupes={dupes} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} onClick={handleClick} />
                   </div>
                 )
               })}
             </div>
           ) : (
-            <StickerGrid stickers={visibleStickers} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
+            <StickerGrid stickers={visibleStickers} owned={owned} dupes={dupes} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} onClick={handleClick} />
           )}
-          <div className="flex items-center gap-5 mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-            {[{ bg: C.emerald, label: 'Tengo' }, { bg: 'rgba(0,0,0,0.08)', label: 'Falta' }, { bg: C.gold, label: 'Especial' }].map(({ bg, label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-xs" style={{ color: '#888' }}>
+          <div className="flex items-center gap-5 mt-4 pt-3 flex-wrap" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            {[{ bg: C.success, label: 'Tengo' }, { bg: 'rgba(0,0,0,0.08)', label: 'Falta' }, { bg: C.accent, label: 'Especial' }].map(({ bg, label }) => (
+              <span key={label} className="flex items-center gap-1.5 text-xs" style={{ color: C.textTer }}>
                 <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: bg }} />{label}
               </span>
             ))}
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: C.textTer }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 14, height: 14, borderRadius: 7, background: C.text, color: '#fff', fontSize: 8, fontWeight: 800, padding: '0 3px' }}>+N</span>
+              Repetida
+            </span>
           </div>
         </div>
       </div>
+
+      {dupeToast && <DupeToast sticker={dupeToast} count={dupes[dupeToast.id] || 0} onClose={() => setDupeToast(null)} />}
     </div>
   )
 }
@@ -1264,6 +1639,7 @@ export default function App() {
   const [user,           setUser]           = useState(null)
   const [albumOwnerId,   setAlbumOwnerId]   = useState(null)
   const [owned,          setOwned]          = useState(loadOwned)
+  const [dupes,          setDupes]          = useState(loadDupes)
   const [hasCoca,        setHasCoca]        = useState(() => loadHasCoca() === 'true')
   const [showCocaModal,  setShowCocaModal]  = useState(() => loadHasCoca() === null)
   const [sidePanel,      setSidePanel]      = useState(null)
@@ -1290,6 +1666,7 @@ export default function App() {
   }, [])
 
   useEffect(() => { saveOwned(owned) }, [owned])
+  useEffect(() => { saveDupesLs(dupes) }, [dupes])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setAuthLoading(false) })
@@ -1318,14 +1695,25 @@ export default function App() {
       setAlbumOwnerId(targetId)
       const data = await loadProgress(targetId).catch(() => null)
       if (!data) {
-        await saveProgress(targetId, [...owned], hasCoca).catch(console.error)
+        await saveProgress(targetId, [...owned], hasCoca, dupes).catch(console.error)
       } else {
         const merged = new Set([...owned, ...(data.owned_ids || [])])
         const cocaMerged = data.has_coca || hasCoca
+        const remoteDupes = data.dupes || {}
+        const mergedDupes = { ...remoteDupes }
+        for (const [id, count] of Object.entries(dupes)) {
+          mergedDupes[id] = Math.max(mergedDupes[id] || 0, count)
+        }
+        Object.keys(mergedDupes).forEach(k => { if (!mergedDupes[k]) delete mergedDupes[k] })
         if (merged.size !== owned.size) setOwned(merged)
         if (cocaMerged !== hasCoca) { setHasCoca(cocaMerged); saveHasCoca(cocaMerged) }
-        if (merged.size !== (data.owned_ids || []).length || cocaMerged !== data.has_coca) {
-          await saveProgress(targetId, [...merged], cocaMerged).catch(console.error)
+        if (JSON.stringify(mergedDupes) !== JSON.stringify(dupes)) setDupes(mergedDupes)
+        if (
+          merged.size !== (data.owned_ids || []).length ||
+          cocaMerged !== data.has_coca ||
+          JSON.stringify(mergedDupes) !== JSON.stringify(remoteDupes)
+        ) {
+          await saveProgress(targetId, [...merged], cocaMerged, mergedDupes).catch(console.error)
         }
       }
     }
@@ -1334,9 +1722,9 @@ export default function App() {
 
   useEffect(() => {
     if (!user || !initialSyncDone.current || !albumOwnerId) return
-    const t = setTimeout(() => saveProgress(albumOwnerId, [...owned], hasCoca).catch(console.error), 600)
+    const t = setTimeout(() => saveProgress(albumOwnerId, [...owned], hasCoca, dupes).catch(console.error), 600)
     return () => clearTimeout(t)
-  }, [owned, hasCoca, user, albumOwnerId])
+  }, [owned, hasCoca, dupes, user, albumOwnerId])
 
   // Show PWA guide on first login if not already installed / not seen before
   useEffect(() => {
@@ -1368,59 +1756,75 @@ export default function App() {
   const toggle   = useCallback(id => { setOwned(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n }) }, [])
   const addMany  = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n }) }, [])
   const removeMany = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n }) }, [])
+  const addDupe = useCallback(id => {
+    setDupes(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
+  }, [])
+  const removeDupe = useCallback(id => {
+    setDupes(prev => {
+      const next = { ...prev }
+      const n = (next[id] || 0) - 1
+      if (n <= 0) delete next[id]; else next[id] = n
+      return next
+    })
+  }, [])
   const handleRareFound = useCallback(sticker => { setRareToast(sticker) }, [])
 
   if (authLoading) return <LoadingScreen />
   if (!user)       return <LoginScreen hasPendingJoin={hasPendingJoin} />
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: C.bgPage }}>
       {showCocaModal && <CocaModal onChoice={handleCocaChoice} />}
       {showPwaGuide  && <PwaGuide onClose={() => setShowPwaGuide(false)} />}
-      {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} toggle={toggle} />}
+      {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} dupes={dupes} toggle={toggle} addDupe={addDupe} removeDupe={removeDupe} />}
       {rareToast && <RareToast sticker={rareToast} onClose={() => setRareToast(null)} />}
       {milestone && <MilestoneCelebration milestone={milestone} onClose={() => setMilestone(null)} />}
 
-      <header className="sticky top-0 z-30" style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-        <div style={{ height: 3, background: C.strip }} />
+      <header className="sticky top-0 z-30" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <div style={{ height: 3, background: C.accentGrad }} />
         <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#bbb' }}>Panini</p>
-              <h1 className="font-black text-xl tracking-tight leading-none mt-0.5" style={{ color: '#111' }}>Mundial 2026</h1>
-              {albumOwnerId && albumOwnerId !== user.id && (
-                <p style={{ fontSize: 10, fontWeight: 600, color: C.purple, marginTop: 2 }}>Álbum compartido</p>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #FBE47A 0%, #D4AF37 50%, #B8860B 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 6px rgba(184,134,11,0.25)' }}>
+                <TrophyIcon size={20} color="#fff" />
+              </div>
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textSec }}>FIFA World Cup 26</p>
+                <h1 className="font-black text-xl tracking-tight leading-none mt-0.5" style={{ color: C.accent, fontFamily: "'Bebas Neue', Impact, 'Arial Narrow', Arial, sans-serif", letterSpacing: '0.02em' }}>Mundial 2026</h1>
+                {albumOwnerId && albumOwnerId !== user.id && (
+                  <p style={{ fontSize: 10, fontWeight: 600, color: C.primary, marginTop: 2 }}>Álbum compartido</p>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <HamburgerMenu onOpen={setSidePanel} onInstall={() => setShowPwaGuide(true)} />
               <div style={{ textAlign: 'right' }}>
-                <span className="font-black tabular-nums" style={{ fontSize: 30, color: C.purple }}>{pct}%</span>
-                <p className="text-xs" style={{ color: '#aaa' }}>{ownedAct} / {totalAct}</p>
+                <span className="font-black tabular-nums" style={{ fontSize: 30, color: C.accent }}>{pct}%</span>
+                <p className="text-xs" style={{ color: C.textTer }}>{ownedAct} / {totalAct}</p>
               </div>
             </div>
           </div>
           <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-            <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: C.strip }} />
+            <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: C.accentGrad }} />
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-5">
-        <AlbumTab allStickers={allStickers} owned={owned} toggle={toggle} addMany={addMany} removeMany={removeMany} hasCoca={hasCoca} onToggleCoca={toggleCoca} onRareFound={handleRareFound} />
+        <AlbumTab allStickers={allStickers} owned={owned} dupes={dupes} toggle={toggle} addMany={addMany} removeMany={removeMany} addDupe={addDupe} removeDupe={removeDupe} hasCoca={hasCoca} onToggleCoca={toggleCoca} onRareFound={handleRareFound} />
       </main>
 
-      <footer className="max-w-6xl w-full mx-auto px-4 lg:px-8 pb-8 pt-6 mt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-        <div className="flex items-center justify-between mb-4 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <p className="text-xs" style={{ color: '#888' }}>{user.email}</p>
-          <button onClick={handleLogout} className="text-xs font-semibold transition-colors" style={{ color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}
-            onMouseOver={e => e.currentTarget.style.color = '#e53935'} onMouseOut={e => e.currentTarget.style.color = '#bbb'}>Cerrar sesión</button>
+      <footer className="max-w-6xl w-full mx-auto px-4 lg:px-8 pb-8 pt-6 mt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        <div className="flex items-center justify-between mb-4 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <p className="text-xs" style={{ color: C.textTer }}>{user.email}</p>
+          <button onClick={handleLogout} className="text-xs font-semibold transition-colors" style={{ color: C.textSec, background: 'none', border: 'none', cursor: 'pointer' }}
+            onMouseOver={e => e.currentTarget.style.color = '#DC2626'} onMouseOut={e => e.currentTarget.style.color = '#bbbbbb'}>Cerrar sesión</button>
         </div>
         <div className="text-center space-y-1">
-          <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#ccc' }}>Creado por</p>
-          <p className="text-sm font-bold tracking-tight" style={{ color: '#888' }}>Shift</p>
-          <a href="tel:5510807509" className="block text-xs tabular-nums" style={{ color: '#bbb' }}
-            onMouseOver={e => e.currentTarget.style.color = '#666'} onMouseOut={e => e.currentTarget.style.color = '#bbb'}>55 1080 7509</a>
+          <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textSec }}>Creado por</p>
+          <p className="text-sm font-bold tracking-tight" style={{ color: C.textTer }}>Shift</p>
+          <a href="tel:5510807509" className="block text-xs tabular-nums" style={{ color: C.textSec }}
+            onMouseOver={e => e.currentTarget.style.color = '#ffffff'} onMouseOut={e => e.currentTarget.style.color = '#bbbbbb'}>55 1080 7509</a>
         </div>
       </footer>
     </div>

@@ -35,18 +35,19 @@ export async function signOut() {
 export async function loadProgress(userId) {
   const { data, error } = await supabase
     .from('user_progress')
-    .select('owned_ids, has_coca, share_token, updated_at')
+    .select('owned_ids, has_coca, dupes, share_token, updated_at')
     .eq('user_id', userId)
     .maybeSingle()
   if (error) throw error
   return data
 }
 
-export async function saveProgress(userId, ownedIds, hasCoca) {
+export async function saveProgress(userId, ownedIds, hasCoca, dupes) {
   const { error } = await supabase.from('user_progress').upsert({
     user_id:    userId,
     owned_ids:  ownedIds,
     has_coca:   hasCoca,
+    dupes:      dupes ?? {},
     updated_at: new Date().toISOString(),
   })
   if (error) throw error
