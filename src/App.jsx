@@ -489,79 +489,94 @@ function ShiftContent() {
   )
 }
 
-// ─── Panel: Faltan ────────────────────────────────────────────────────────────
+// ─── Panel: Faltantes ─────────────────────────────────────────────────────────
 function FaltanContent({ allStickers, owned, toggle }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch]   = useState('')
+  const dragging   = useRef(false)
 
   const missing = useMemo(() => allStickers.filter(s => !owned.has(s.id)), [allStickers, owned])
 
-  const filtered = useMemo(() => {
+  const grouped = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return missing
-    return missing.filter(s =>
-      s.id.toLowerCase().includes(q) ||
-      s.section.toLowerCase().includes(q) ||
-      (s.label || '').toLowerCase().includes(q)
-    )
+    const pool = q
+      ? missing.filter(s =>
+          s.section.toLowerCase().includes(q) ||
+          s.id.toLowerCase().includes(q) ||
+          (s.label || '').toLowerCase().includes(q)
+        )
+      : missing
+    const map = {}
+    pool.forEach(s => { if (!map[s.section]) map[s.section] = []; map[s.section].push(s) })
+    return map
   }, [missing, search])
 
+  const filteredTotal = useMemo(() => Object.values(grouped).reduce((a, b) => a + b.length, 0), [grouped])
+
+  function handleMouseDown(id) { dragging.current = true; if (!owned.has(id)) toggle(id) }
+  function handleMouseEnter(id) { if (dragging.current && !owned.has(id)) toggle(id) }
+  function stopDrag() { dragging.current = false }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 10 }}>
-        {[
-          { val: missing.length, label: 'Faltan',    clr: '#111'    },
-          { val: allStickers.filter(s => owned.has(s.id)).length, label: 'Tengo', clr: C.emerald },
-        ].map(({ val, label, clr }) => (
-          <div key={label} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
-            <p style={{ fontSize: 22, fontWeight: 900, color: clr, lineHeight: 1 }}>{val}</p>
-            <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
-          </div>
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: '#111', lineHeight: 1, margin: 0 }}>{missing.length}</p>
+          <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>Pendientes</p>
+        </div>
+        <div style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
+          <p style={{ fontSize: 22, fontWeight: 900, color: C.emerald, lineHeight: 1, margin: 0 }}>{allStickers.length - missing.length}</p>
+          <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>Conseguidas</p>
+        </div>
       </div>
 
+      {/* Search */}
       <div style={{ position: 'relative' }}>
-        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#bbb', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#bbb', pointerEvents: 'none' }}
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input
-          type="search" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por equipo o número…"
+        <input type="search" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar equipo o número…"
           style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px 10px 34px', outline: 'none', background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
           onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
-          onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
-        />
+          onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
       </div>
 
-      {search && (
-        <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</p>
+      {search.trim() && (
+        <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>{filteredTotal} resultado{filteredTotal !== 1 ? 's' : ''}</p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <p style={{ fontSize: 13, color: '#ccc' }}>{search ? 'Sin resultados' : '¡Álbum completo!'}</p>
+      {/* Grid grouped by section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }} onMouseUp={stopDrag} onMouseLeave={stopDrag}>
+        {Object.keys(grouped).length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <p style={{ fontSize: 22 }}>🎉</p>
+            <p style={{ fontSize: 13, color: '#ccc', marginTop: 8 }}>{search ? 'Sin resultados' : '¡Álbum completo!'}</p>
           </div>
         ) : (
-          filtered.map(s => (
-            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)' }}>
-              <div style={{ width: 38, height: 38, borderRadius: 8, flexShrink: 0, background: s.isRare ? '#fef3c7' : 'rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.05em', color: s.isRare ? '#b45309' : '#bbb' }}>{s.section}</span>
-                <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: s.isRare ? '#b45309' : '#555' }}>{s.num}</span>
+          Object.entries(grouped).map(([code, stickers]) => {
+            const sec  = SECTIONS.find(s => s.id === code)
+            const team = TEAM_LIST.find(t => t.code === code)
+            return (
+              <div key={code}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.06em', color: '#555' }}>{code}</span>
+                  <span style={{ fontSize: 10, color: '#bbb' }}>{sec?.name || team?.name}</span>
+                  <span style={{ fontSize: 10, color: '#ddd', marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{stickers.length}</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
+                  {stickers.map(s => (
+                    <StickerTile key={s.id} sticker={s} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
+                  ))}
+                </div>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label || s.id}</p>
-                {s.isRare && <p style={{ fontSize: 10, color: '#b45309', fontWeight: 600, marginTop: 1 }}>Especial</p>}
-              </div>
-              <button onClick={() => toggle(s.id)}
-                style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, padding: '6px 11px', borderRadius: 8, background: 'rgba(22,163,74,0.1)', color: '#15803d', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
-                onMouseOut={e  => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}>
-                Ya la tengo
-              </button>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
+
+      <p style={{ fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 4 }}>Toca una estampa para marcarla como conseguida</p>
     </div>
   )
 }
@@ -692,7 +707,7 @@ function PwaGuide({ onClose }) {
 
 // ─── Side panel ───────────────────────────────────────────────────────────────
 function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, toggle }) {
-  const titles = { faltan: 'Me faltan', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
+  const titles = { faltan: 'Faltantes', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
   return (
     <>
       <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
@@ -725,7 +740,7 @@ function HamburgerMenu({ onOpen, onInstall }) {
     return () => document.removeEventListener('mousedown', close)
   }, [])
   const items = [
-    { id: 'faltan',    label: 'Me faltan',      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { id: 'faltan',    label: 'Faltantes',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
     { id: 'exportar',  label: 'Exportar',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
     { id: 'compartir', label: 'Compartir',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
     { id: 'instalar',  label: 'Agregar como app', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><polyline points="9 6 12 3 15 6"/><line x1="12" y1="3" x2="12" y2="14"/></svg> },
