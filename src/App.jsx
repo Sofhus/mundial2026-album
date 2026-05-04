@@ -566,6 +566,130 @@ function FaltanContent({ allStickers, owned, toggle }) {
   )
 }
 
+// ─── PWA install guide ────────────────────────────────────────────────────────
+function PwaGuide({ onClose }) {
+  const [os, setOs] = useState(() => /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'ios' : 'android')
+
+  function dismiss(remember) {
+    if (remember) localStorage.setItem('pwa_guide_seen', '1')
+    onClose()
+  }
+
+  const IosShareIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="10" width="16" height="11" rx="2"/>
+      <polyline points="9 6 12 3 15 6"/>
+      <line x1="12" y1="3" x2="12" y2="14"/>
+    </svg>
+  )
+  const AddHomeIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <line x1="12" y1="8" x2="12" y2="16"/>
+      <line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>
+  )
+  const SafariIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M16.24 7.76L14.12 14.12L7.76 16.24L9.88 9.88L16.24 7.76z"/>
+    </svg>
+  )
+  const DotsIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/>
+    </svg>
+  )
+  const CheckIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  )
+
+  const iosSteps = [
+    { color: '#0a84ff', bg: 'rgba(10,132,255,0.1)',   icon: <SafariIcon />,   title: 'Abre esta página en Safari',          desc: 'No funciona en Chrome ni otros navegadores de iPhone' },
+    { color: C.purple,  bg: 'rgba(124,58,237,0.1)',   icon: <IosShareIcon />, title: 'Toca el botón de compartir',           desc: 'El ícono ↑ en la barra inferior de Safari' },
+    { color: C.teal,    bg: 'rgba(77,182,172,0.12)',  icon: <AddHomeIcon />,  title: 'Agregar a pantalla de inicio',         desc: 'Desliza hacia abajo en el menú y toca esa opción' },
+    { color: C.emerald, bg: 'rgba(22,163,74,0.1)',    icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
+  ]
+  const androidSteps = [
+    { color: '#4285F4', bg: 'rgba(66,133,244,0.1)',   icon: <DotsIcon />,     title: 'Toca los tres puntos ⋮',               desc: 'Arriba a la derecha en Chrome' },
+    { color: C.teal,    bg: 'rgba(77,182,172,0.12)',  icon: <AddHomeIcon />,  title: 'Agregar a pantalla principal',         desc: 'Busca "Instalar aplicación" o "Agregar a pantalla principal"' },
+    { color: C.emerald, bg: 'rgba(22,163,74,0.1)',    icon: <CheckIcon />,    title: '¡Lista!',                              desc: 'La app aparece en tu inicio como cualquier otra app' },
+  ]
+  const steps = os === 'ios' ? iosSteps : androidSteps
+
+  return (
+    <>
+      <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+        onClick={() => dismiss(false)}>
+        <div style={{ width: '100%', maxWidth: 480, maxHeight: '94vh', overflowY: 'auto', background: '#fff', borderRadius: '22px 22px 0 0', animation: 'slideUp 0.32s cubic-bezier(0.32,0.72,0,1)' }}
+          onClick={e => e.stopPropagation()}>
+
+          {/* Color stripe */}
+          <div style={{ height: 4, background: C.strip, borderRadius: '22px 22px 0 0' }} />
+
+          {/* Header */}
+          <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <img src="/icon.png" alt="" style={{ width: 46, height: 46, borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.14)' }} />
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 17, color: '#111', lineHeight: 1, margin: 0 }}>Agrega la app</p>
+                  <p style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Sin internet, directo desde tu inicio</p>
+                </div>
+              </div>
+              <button onClick={() => dismiss(false)} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+            </div>
+
+            {/* OS switcher */}
+            <div style={{ display: 'flex', background: '#f0f0f3', borderRadius: 10, padding: 3, gap: 2 }}>
+              {[{ id: 'ios', label: '📱 iPhone' }, { id: 'android', label: '🤖 Android' }].map(({ id, label }) => (
+                <button key={id} onClick={() => setOs(id)}
+                  style={{ flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                    background: os === id ? '#fff' : 'transparent', color: os === id ? '#111' : '#999',
+                    boxShadow: os === id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div style={{ padding: '20px 20px 8px' }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: step.bg, color: step.color, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${step.color}30`, flexShrink: 0 }}>
+                    {step.icon}
+                  </div>
+                  {i < steps.length - 1 && <div style={{ width: 2, height: 26, background: 'rgba(0,0,0,0.07)', borderRadius: 1, margin: '4px 0' }} />}
+                </div>
+                <div style={{ paddingTop: 6, paddingBottom: i < steps.length - 1 ? 20 : 0 }}>
+                  <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, color: step.color, background: step.bg, padding: '2px 7px', borderRadius: 4, marginBottom: 5, letterSpacing: '0.04em' }}>PASO {i + 1}</span>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: '#111', margin: 0, lineHeight: 1.3 }}>{step.title}</p>
+                  <p style={{ fontSize: 12, color: '#777', marginTop: 4, lineHeight: 1.55 }}>{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div style={{ padding: '12px 20px 32px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={() => dismiss(true)} style={{ width: '100%', padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
+              Entendido
+            </button>
+            <button onClick={() => dismiss(false)} style={{ width: '100%', padding: 10, fontSize: 12, fontWeight: 500, color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Recordármelo después
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Side panel ───────────────────────────────────────────────────────────────
 function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, toggle }) {
   const titles = { faltan: 'Me faltan', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
@@ -592,7 +716,7 @@ function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, togg
 }
 
 // ─── Hamburger menu ───────────────────────────────────────────────────────────
-function HamburgerMenu({ onOpen }) {
+function HamburgerMenu({ onOpen, onInstall }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useEffect(() => {
@@ -601,11 +725,17 @@ function HamburgerMenu({ onOpen }) {
     return () => document.removeEventListener('mousedown', close)
   }, [])
   const items = [
-    { id: 'faltan',    label: 'Me faltan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
-    { id: 'exportar',  label: 'Exportar',  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
-    { id: 'compartir', label: 'Compartir', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
-    { id: 'shift',     label: 'Shift',     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
+    { id: 'faltan',    label: 'Me faltan',      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { id: 'exportar',  label: 'Exportar',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
+    { id: 'compartir', label: 'Compartir',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
+    { id: 'instalar',  label: 'Agregar como app', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><polyline points="9 6 12 3 15 6"/><line x1="12" y1="3" x2="12" y2="14"/></svg> },
+    { id: 'shift',     label: 'Shift',            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
   ]
+  function handleItem(id) {
+    setOpen(false)
+    if (id === 'instalar') onInstall()
+    else onOpen(id)
+  }
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(o => !o)}
@@ -613,9 +743,9 @@ function HamburgerMenu({ onOpen }) {
         {[0,1,2].map(i => <div key={i} style={{ width: 14, height: 1.5, background: '#555', borderRadius: 1 }} />)}
       </button>
       {open && (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 170, zIndex: 40 }}>
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 180, zIndex: 40 }}>
           {items.map((item, i) => (
-            <button key={item.id} onClick={() => { setOpen(false); onOpen(item.id) }}
+            <button key={item.id} onClick={() => handleItem(item.id)}
               style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', fontSize: 13, fontWeight: 600, color: '#333', cursor: 'pointer' }}
               onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'}
               onMouseOut={e  => e.currentTarget.style.background = 'transparent'}>
@@ -932,6 +1062,7 @@ export default function App() {
   const [rareToast,      setRareToast]      = useState(null)
   const [milestone,      setMilestone]      = useState(null)
   const [hasPendingJoin, setHasPendingJoin] = useState(() => !!localStorage.getItem('pending_join_token'))
+  const [showPwaGuide,   setShowPwaGuide]   = useState(false)
   const initialSyncDone = useRef(false)
   const prevPctRef      = useRef(null)
 
@@ -999,6 +1130,16 @@ export default function App() {
     return () => clearTimeout(t)
   }, [owned, hasCoca, user, albumOwnerId])
 
+  // Show PWA guide on first login if not already installed / not seen before
+  useEffect(() => {
+    if (!user) return
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone
+    if (!isStandalone && !localStorage.getItem('pwa_guide_seen')) {
+      const t = setTimeout(() => setShowPwaGuide(true), 900)
+      return () => clearTimeout(t)
+    }
+  }, [user])
+
   // Milestone check: only triggers when crossing the threshold, not on load
   useEffect(() => {
     if (!user || !initialSyncDone.current) return
@@ -1027,6 +1168,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
       {showCocaModal && <CocaModal onChoice={handleCocaChoice} />}
+      {showPwaGuide  && <PwaGuide onClose={() => setShowPwaGuide(false)} />}
       {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} toggle={toggle} />}
       {rareToast && <RareToast sticker={rareToast} onClose={() => setRareToast(null)} />}
       {milestone && <MilestoneCelebration milestone={milestone} onClose={() => setMilestone(null)} />}
@@ -1043,7 +1185,7 @@ export default function App() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <HamburgerMenu onOpen={setSidePanel} />
+              <HamburgerMenu onOpen={setSidePanel} onInstall={() => setShowPwaGuide(true)} />
               <div style={{ textAlign: 'right' }}>
                 <span className="font-black tabular-nums" style={{ fontSize: 30, color: C.purple }}>{pct}%</span>
                 <p className="text-xs" style={{ color: '#aaa' }}>{ownedAct} / {totalAct}</p>
