@@ -254,8 +254,8 @@ function ExportarContent({ allStickers, owned }) {
     }
     if (format === 'rare') {
       const miss = allStickers.filter(s => s.isRare && !owned.has(s.id))
-      if (!miss.length) return 'Ya tengo todas las estampas raras del álbum 2026.'
-      return `Me faltan ${miss.length} estampas raras:\n\n` + miss.map(s => `${s.id} — ${s.label}`).join('\n') + '\n\n¿Tienes alguna para cambio?'
+      if (!miss.length) return 'Ya tengo todas las estampas especiales del álbum 2026.'
+      return `Me faltan ${miss.length} estampas especiales:\n\n` + miss.map(s => `${s.id} — ${s.label}`).join('\n') + '\n\n¿Tienes alguna para cambio?'
     }
   }
 
@@ -265,7 +265,7 @@ function ExportarContent({ allStickers, owned }) {
   const formats = [
     { id: 'ranges',  title: 'Por código y rango', desc: 'MEX: 3-7, 12 · ARG: 5, 18' },
     { id: 'bygroup', title: 'Por grupo A–L',       desc: 'Organizado por grupo del torneo' },
-    { id: 'rare',    title: 'Solo las raras',      desc: 'Lista para buscar cambio' },
+    { id: 'rare',    title: 'Solo las especiales',  desc: 'Lista para buscar cambio' },
   ]
 
   return (
@@ -550,7 +550,7 @@ function FaltanContent({ allStickers, owned, toggle }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 12, fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label || s.id}</p>
-                {s.isRare && <p style={{ fontSize: 10, color: '#b45309', fontWeight: 600, marginTop: 1 }}>Rara</p>}
+                {s.isRare && <p style={{ fontSize: 10, color: '#b45309', fontWeight: 600, marginTop: 1 }}>Especial</p>}
               </div>
               <button onClick={() => toggle(s.id)}
                 style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, padding: '6px 11px', borderRadius: 8, background: 'rgba(22,163,74,0.1)', color: '#15803d', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -655,7 +655,7 @@ function StickerTile({ sticker, owned, onMouseDown, onMouseEnter }) {
   else                             { bg = 'rgba(0,0,0,0.06)';   text = '#aaa';    outline = 'none' }
   return (
     <div onMouseDown={() => onMouseDown(sticker.id)} onMouseEnter={() => onMouseEnter(sticker.id)}
-      title={`${sticker.id} — ${sticker.label}${sticker.isRare ? ' · RARA' : ''}`}
+      title={`${sticker.id} — ${sticker.label}${sticker.isRare ? ' · ESPECIAL' : ''}`}
       style={{ background: bg, color: text, cursor: 'pointer', borderRadius: 6, outline, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', transition: 'transform 0.05s' }}
       onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.zIndex = 10 }}
       onMouseOut={e  => { e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = '' }}>
@@ -908,7 +908,7 @@ function AlbumTab({ allStickers, owned, toggle, addMany, removeMany, hasCoca, on
             <StickerGrid stickers={visibleStickers} owned={owned} onMouseDown={handleMouseDown} onMouseEnter={handleMouseEnter} />
           )}
           <div className="flex items-center gap-5 mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-            {[{ bg: C.emerald, label: 'Tengo' }, { bg: 'rgba(0,0,0,0.08)', label: 'Falta' }, { bg: C.gold, label: 'Rara' }].map(({ bg, label }) => (
+            {[{ bg: C.emerald, label: 'Tengo' }, { bg: 'rgba(0,0,0,0.08)', label: 'Falta' }, { bg: C.gold, label: 'Especial' }].map(({ bg, label }) => (
               <span key={label} className="flex items-center gap-1.5 text-xs" style={{ color: '#888' }}>
                 <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: bg }} />{label}
               </span>
