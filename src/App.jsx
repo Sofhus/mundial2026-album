@@ -729,7 +729,7 @@ function HamburgerMenu({ onOpen, onInstall }) {
     { id: 'exportar',  label: 'Exportar',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
     { id: 'compartir', label: 'Compartir',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
     { id: 'instalar',  label: 'Agregar como app', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><polyline points="9 6 12 3 15 6"/><line x1="12" y1="3" x2="12" y2="14"/></svg> },
-    { id: 'shift',     label: 'Shift',            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
+    { id: 'shift',     label: 'Shift',            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>, gold: true },
   ]
   function handleItem(id) {
     setOpen(false)
@@ -746,9 +746,9 @@ function HamburgerMenu({ onOpen, onInstall }) {
         <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fff', borderRadius: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', minWidth: 180, zIndex: 40 }}>
           {items.map((item, i) => (
             <button key={item.id} onClick={() => handleItem(item.id)}
-              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', fontSize: 13, fontWeight: 600, color: '#333', cursor: 'pointer' }}
-              onMouseOver={e => e.currentTarget.style.background = '#f8f8f8'}
-              onMouseOut={e  => e.currentTarget.style.background = 'transparent'}>
+              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, background: item.gold ? 'rgba(217,119,6,0.06)' : 'transparent', border: 'none', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', fontSize: 13, fontWeight: 600, color: item.gold ? C.gold : '#333', cursor: 'pointer' }}
+              onMouseOver={e => e.currentTarget.style.background = item.gold ? 'rgba(217,119,6,0.12)' : '#f8f8f8'}
+              onMouseOut={e  => e.currentTarget.style.background = item.gold ? 'rgba(217,119,6,0.06)' : 'transparent'}>
               {item.icon}{item.label}
             </button>
           ))}
