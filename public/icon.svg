@@ -1,33 +1,174 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <clipPath id="r"><rect width="512" height="512" rx="96"/></clipPath>
+    <clipPath id="app-round"><rect width="512" height="512" rx="80"/></clipPath>
+    <!-- Per-tile clip paths (4 cols × 5 rows, each tile 92×92, except row5 is 92×144) -->
+    <clipPath id="t00"><rect x="0"   y="0"   width="92" height="92"/></clipPath>
+    <clipPath id="t10"><rect x="92"  y="0"   width="92" height="92"/></clipPath>
+    <clipPath id="t20"><rect x="184" y="0"   width="92" height="92"/></clipPath>
+    <clipPath id="t30"><rect x="276" y="0"   width="92" height="92"/></clipPath>
+    <clipPath id="t01"><rect x="0"   y="92"  width="92" height="92"/></clipPath>
+    <clipPath id="t11"><rect x="92"  y="92"  width="92" height="92"/></clipPath>
+    <clipPath id="t21"><rect x="184" y="92"  width="92" height="92"/></clipPath>
+    <clipPath id="t31"><rect x="276" y="92"  width="92" height="92"/></clipPath>
+    <clipPath id="t02"><rect x="0"   y="184" width="92" height="92"/></clipPath>
+    <clipPath id="t12"><rect x="92"  y="184" width="92" height="92"/></clipPath>
+    <clipPath id="t22"><rect x="184" y="184" width="92" height="92"/></clipPath>
+    <clipPath id="t32"><rect x="276" y="184" width="92" height="92"/></clipPath>
+    <clipPath id="t03"><rect x="0"   y="276" width="92" height="92"/></clipPath>
+    <clipPath id="t13"><rect x="92"  y="276" width="92" height="92"/></clipPath>
+    <clipPath id="t23"><rect x="184" y="276" width="92" height="92"/></clipPath>
+    <clipPath id="t33"><rect x="276" y="276" width="92" height="92"/></clipPath>
+    <clipPath id="t04"><rect x="0"   y="368" width="92" height="144"/></clipPath>
+    <clipPath id="t14"><rect x="92"  y="368" width="92" height="144"/></clipPath>
+    <clipPath id="t24"><rect x="184" y="368" width="92" height="144"/></clipPath>
+    <clipPath id="t34"><rect x="276" y="368" width="92" height="144"/></clipPath>
+    <!-- Right stripe clip -->
+    <clipPath id="stripe"><rect x="368" y="0" width="144" height="512"/></clipPath>
   </defs>
-  <g clip-path="url(#r)">
-    <rect width="512" height="512" fill="#fff8e1"/>
+
+  <g clip-path="url(#app-round)">
+    <!-- ─── MOSAIC (left 368px) ─── -->
+    <!-- Tile notation: bg=background color, arc=quarter-circle color, corner=which corner the arc originates from -->
+
+    <!-- Row 0 -->
+    <g clip-path="url(#t00)"><!-- bg:cerulean arc:orange corner:TL -->
+      <rect x="0" y="0" width="92" height="92" fill="#2471a3"/>
+      <circle cx="0" cy="0" r="92" fill="#e8501a"/>
+    </g>
+    <g clip-path="url(#t10)"><!-- bg:lime arc:teal corner:TR -->
+      <rect x="92" y="0" width="92" height="92" fill="#78bc3c"/>
+      <circle cx="184" cy="0" r="92" fill="#0b6a5f"/>
+    </g>
+    <g clip-path="url(#t20)"><!-- bg:red arc:cerulean corner:BL -->
+      <rect x="184" y="0" width="92" height="92" fill="#c0392b"/>
+      <circle cx="184" cy="92" r="92" fill="#2471a3"/>
+    </g>
+    <g clip-path="url(#t30)"><!-- bg:orange arc:red corner:BR -->
+      <rect x="276" y="0" width="92" height="92" fill="#e8501a"/>
+      <circle cx="368" cy="92" r="92" fill="#c0392b"/>
+    </g>
+
     <!-- Row 1 -->
-    <circle cx="40"  cy="40"  r="80" fill="#e53935"/>
-    <circle cx="170" cy="50"  r="75" fill="#26a69a"/>
-    <circle cx="300" cy="35"  r="85" fill="#fbc02d"/>
-    <circle cx="440" cy="55"  r="78" fill="#7e57c2"/>
+    <g clip-path="url(#t01)"><!-- bg:teal arc:lime corner:BR -->
+      <rect x="0" y="92" width="92" height="92" fill="#0b6a5f"/>
+      <circle cx="92" cy="184" r="92" fill="#78bc3c"/>
+    </g>
+    <g clip-path="url(#t11)"><!-- bg:orange arc:cerulean corner:TL -->
+      <rect x="92" y="92" width="92" height="92" fill="#e8501a"/>
+      <circle cx="92" cy="92" r="92" fill="#2471a3"/>
+    </g>
+    <g clip-path="url(#t21)"><!-- bg:cerulean arc:lime corner:TR -->
+      <rect x="184" y="92" width="92" height="92" fill="#2471a3"/>
+      <circle cx="276" cy="92" r="92" fill="#78bc3c"/>
+    </g>
+    <g clip-path="url(#t31)"><!-- bg:lime arc:teal corner:BL -->
+      <rect x="276" y="92" width="92" height="92" fill="#78bc3c"/>
+      <circle cx="276" cy="184" r="92" fill="#0b6a5f"/>
+    </g>
+
     <!-- Row 2 -->
-    <circle cx="60"  cy="180" r="78" fill="#42a5f5"/>
-    <circle cx="200" cy="190" r="88" fill="#ef5350"/>
-    <circle cx="340" cy="180" r="80" fill="#9ccc65"/>
-    <circle cx="475" cy="195" r="74" fill="#ec407a"/>
+    <g clip-path="url(#t02)"><!-- bg:red arc:orange corner:TR -->
+      <rect x="0" y="184" width="92" height="92" fill="#c0392b"/>
+      <circle cx="92" cy="184" r="92" fill="#e8501a"/>
+    </g>
+    <g clip-path="url(#t12)"><!-- bg:teal arc:red corner:TL -->
+      <rect x="92" y="184" width="92" height="92" fill="#0b6a5f"/>
+      <circle cx="92" cy="184" r="92" fill="#c0392b"/>
+    </g>
+    <g clip-path="url(#t22)"><!-- bg:lime arc:cerulean corner:BR -->
+      <rect x="184" y="184" width="92" height="92" fill="#78bc3c"/>
+      <circle cx="276" cy="276" r="92" fill="#2471a3"/>
+    </g>
+    <g clip-path="url(#t32)"><!-- bg:orange arc:teal corner:BL -->
+      <rect x="276" y="184" width="92" height="92" fill="#e8501a"/>
+      <circle cx="276" cy="276" r="92" fill="#0b6a5f"/>
+    </g>
+
     <!-- Row 3 -->
-    <circle cx="40"  cy="320" r="85" fill="#ff9800"/>
-    <circle cx="180" cy="335" r="78" fill="#ab47bc"/>
-    <circle cx="320" cy="325" r="82" fill="#26c6da"/>
-    <circle cx="465" cy="340" r="80" fill="#cddc39"/>
-    <!-- Row 4 -->
-    <circle cx="60"  cy="470" r="80" fill="#5c6bc0"/>
-    <circle cx="200" cy="475" r="78" fill="#ffb300"/>
-    <circle cx="340" cy="470" r="85" fill="#66bb6a"/>
-    <circle cx="475" cy="475" r="76" fill="#f06292"/>
-    <!-- Bold white "26" overlay (album hero element) -->
-    <text x="256" y="340" font-family="Inter, Helvetica, Arial, sans-serif"
-          font-weight="900" font-size="300" letter-spacing="-14"
-          text-anchor="middle" fill="#ffffff"
-          stroke="#ffffff" stroke-width="4" paint-order="stroke">26</text>
+    <g clip-path="url(#t03)"><!-- bg:cerulean arc:teal corner:TL -->
+      <rect x="0" y="276" width="92" height="92" fill="#2471a3"/>
+      <circle cx="0" cy="276" r="92" fill="#0b6a5f"/>
+    </g>
+    <g clip-path="url(#t13)"><!-- bg:orange arc:lime corner:TR -->
+      <rect x="92" y="276" width="92" height="92" fill="#e8501a"/>
+      <circle cx="184" cy="276" r="92" fill="#78bc3c"/>
+    </g>
+    <g clip-path="url(#t23)"><!-- bg:teal arc:red corner:BR -->
+      <rect x="184" y="276" width="92" height="92" fill="#0b6a5f"/>
+      <circle cx="276" cy="368" r="92" fill="#c0392b"/>
+    </g>
+    <g clip-path="url(#t33)"><!-- bg:lime arc:orange corner:BL -->
+      <rect x="276" y="276" width="92" height="92" fill="#78bc3c"/>
+      <circle cx="276" cy="368" r="92" fill="#e8501a"/>
+    </g>
+
+    <!-- Row 4 (taller, goes to bottom) -->
+    <g clip-path="url(#t04)"><!-- bg:red arc:cerulean corner:TR -->
+      <rect x="0" y="368" width="92" height="144" fill="#c0392b"/>
+      <circle cx="92" cy="368" r="92" fill="#2471a3"/>
+    </g>
+    <g clip-path="url(#t14)"><!-- bg:teal arc:orange corner:BL -->
+      <rect x="92" y="368" width="92" height="144" fill="#0b6a5f"/>
+      <circle cx="92" cy="512" r="92" fill="#e8501a"/>
+    </g>
+    <g clip-path="url(#t24)"><!-- bg:lime arc:red corner:TL -->
+      <rect x="184" y="368" width="92" height="144" fill="#78bc3c"/>
+      <circle cx="184" cy="368" r="92" fill="#c0392b"/>
+    </g>
+    <g clip-path="url(#t34)"><!-- bg:orange arc:cerulean corner:TR -->
+      <rect x="276" y="368" width="92" height="144" fill="#e8501a"/>
+      <circle cx="368" cy="368" r="92" fill="#2471a3"/>
+    </g>
+
+    <!-- ─── RIGHT STRIPE PANEL ─── -->
+    <g clip-path="url(#stripe)">
+      <rect x="368" y="0"   width="36" height="512" fill="#c0392b"/>
+      <rect x="404" y="0"   width="36" height="512" fill="#e8501a"/>
+      <rect x="440" y="0"   width="36" height="512" fill="#78bc3c"/>
+      <rect x="476" y="0"   width="36" height="512" fill="#0b6a5f"/>
+    </g>
+
+    <!-- ─── WHITE ROUNDED BORDER ─── -->
+    <rect x="0" y="0" width="512" height="512" rx="80" fill="none" stroke="#ffffff" stroke-width="20"/>
+
+    <!-- ─── "26" — white with dark teal outline ─── -->
+    <text x="196" y="330"
+          font-family="'Arial Black','Impact','Helvetica Neue',Arial,sans-serif"
+          font-weight="900" font-size="268" letter-spacing="-10"
+          text-anchor="middle"
+          stroke="#0a5248" stroke-width="20" paint-order="stroke"
+          fill="#ffffff">26</text>
+
+    <!-- ─── TROPHY (teal line art, inside "26") ─── -->
+    <g transform="translate(196,162)" fill="none" stroke="#0a5248" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Cup bowl -->
+      <path d="M-36,-52 L36,-52 L30,4 Q24,38 0,46 Q-24,38 -30,4 Z"/>
+      <!-- Left handle -->
+      <path d="M-36,-40 Q-62,-40 -62,-14 Q-62,10 -36,10"/>
+      <!-- Right handle -->
+      <path d="M36,-40 Q62,-40 62,-14 Q62,10 36,10"/>
+      <!-- Stem -->
+      <line x1="0" y1="46" x2="0" y2="68"/>
+      <!-- Base -->
+      <rect x="-26" y="68" width="52" height="9" rx="3"/>
+    </g>
+
+    <!-- ─── "FIFA" label ─── -->
+    <text x="196" y="390"
+          font-family="'Arial Black','Impact','Helvetica Neue',Arial,sans-serif"
+          font-weight="900" font-size="32" letter-spacing="7"
+          text-anchor="middle"
+          fill="#0a5248">FIFA</text>
+
+    <!-- ─── "WORLD CUP 2026" ─── -->
+    <text x="196" y="432"
+          font-family="'Arial Black','Impact','Helvetica Neue',Arial,sans-serif"
+          font-weight="900" font-size="20" letter-spacing="1"
+          text-anchor="middle"
+          stroke="#0a5248" stroke-width="5" paint-order="stroke"
+          fill="#ffffff">WORLD CUP 2026</text>
+
+    <!-- ─── Shine overlay ─── -->
+    <ellipse cx="180" cy="72" rx="150" ry="52" fill="#ffffff" opacity="0.09"/>
   </g>
 </svg>
