@@ -54,18 +54,22 @@ export async function saveProgress(userId, ownedIds, hasCoca) {
 
 // ─── Sharing ─────────────────────────────────────────────────────────────────
 export async function getOrCreateShareToken(userId) {
-  const { data } = await supabase
+  const { data, error: selectErr } = await supabase
     .from('user_progress')
     .select('share_token')
     .eq('user_id', userId)
     .maybeSingle()
 
+  if (selectErr) throw selectErr
   if (data?.share_token) return data.share_token
 
   const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6)
-  await supabase
+  const { error: updateErr } = await supabase
     .from('user_progress')
-    .upsert({ user_id: userId, share_token: token, updated_at: new Date().toISOString() })
+    .update({ share_token: token, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+
+  if (updateErr) throw updateErr
   return token
 }
 
