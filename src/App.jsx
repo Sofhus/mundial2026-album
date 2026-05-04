@@ -8,6 +8,7 @@ import {
   supabase, signInWithEmail, signInWithGoogle, signOut,
   loadProgress, saveProgress,
   getOrCreateShareToken, joinAlbumByToken, getMyAlbumOwnerId,
+  followByToken, getFollowing, unfollowUser,
 } from './lib/supabase.js'
 
 function loadOwned() {
@@ -581,6 +582,196 @@ function FaltanContent({ allStickers, owned, toggle }) {
   )
 }
 
+// ─── Panel: Amigos ────────────────────────────────────────────────────────────
+function AmigosContent({ user }) {
+  const [friends,   setFriends]   = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [addInput,  setAddInput]  = useState('')
+  const [addStatus, setAddStatus] = useState('idle') // 'idle'|'loading'|'success'|'error'
+  const [addError,  setAddError]  = useState('')
+  const [selected,  setSelected]  = useState(null)
+
+  function avatarColor(str) {
+    const palette = [C.purple, C.teal, '#f59e0b', '#3b82f6', '#ec4899', '#10b981', C.red]
+    let h = 0; for (const c of (str || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffff
+    return palette[h % palette.length]
+  }
+
+  async function load() {
+    try { setFriends(await getFollowing(user.id)) }
+    catch(e) { console.error(e) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [user.id])
+
+  async function handleAdd() {
+    const input = addInput.trim()
+    const m = input.match(/[?&]join=([a-z0-9]+)/i) || input.match(/^([a-z0-9]{8,16})$/i)
+    const token = m?.[1]
+    if (!token) { setAddError('Pega el link de invitación completo'); return }
+    setAddStatus('loading'); setAddError('')
+    try {
+      const ownerId = await followByToken(token, user.id)
+      if (!ownerId) { setAddError('Link inválido o ya lo sigues'); setAddStatus('error'); return }
+      await load()
+      setAddInput(''); setAddStatus('success')
+      setTimeout(() => setAddStatus('idle'), 2500)
+    } catch(e) { setAddError('No se pudo agregar. Intenta de nuevo.'); setAddStatus('error') }
+  }
+
+  async function handleUnfollow(friendId) {
+    try {
+      await unfollowUser(friendId, user.id)
+      setFriends(prev => prev.filter(f => f.user_id !== friendId))
+      if (selected?.user_id === friendId) setSelected(null)
+    } catch(e) { console.error(e) }
+  }
+
+  // ── Vista detalle de un amigo ─────────────────────────────────────────────
+  if (selected) {
+    const friendOwned    = new Set(selected.owned_ids || [])
+    const friendStickers = selected.has_coca ? ALL_STICKERS_CC : ALL_STICKERS
+    const missing        = friendStickers.filter(s => !friendOwned.has(s.id))
+    const pct            = Math.round((friendOwned.size / friendStickers.length) * 100)
+    const name           = selected.email?.split('@')[0] || 'Amigo'
+    const color          = avatarColor(selected.email)
+    const grouped        = {}
+    missing.forEach(s => { if (!grouped[s.section]) grouped[s.section] = []; grouped[s.section].push(s) })
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#888', fontSize: 13, fontWeight: 600 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 46, height: 46, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, flexShrink: 0 }}>
+            {name.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 15, color: '#111', margin: 0 }}>{name}</p>
+            <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{selected.email}</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[{ val: `${pct}%`, label: 'Completado', clr: color }, { val: missing.length, label: 'Le faltan', clr: '#111' }].map(({ val, label, clr }) => (
+            <div key={label} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
+              <p style={{ fontSize: 22, fontWeight: 900, color: clr, lineHeight: 1, margin: 0 }}>{val}</p>
+              <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ height: 6, background: 'rgba(0,0,0,0.07)', borderRadius: 4, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s' }} />
+        </div>
+
+        {missing.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <p style={{ fontSize: 28 }}>🎉</p>
+            <p style={{ fontSize: 13, color: '#aaa', marginTop: 8 }}>¡Tiene el álbum completo!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: 11, color: '#bbb', margin: 0 }}>Estampas que le faltan</p>
+            {Object.entries(grouped).map(([code, stickers]) => {
+              const sec = SECTIONS.find(s => s.id === code)
+              const team = TEAM_LIST.find(t => t.code === code)
+              return (
+                <div key={code}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: '#555' }}>{code}</span>
+                    <span style={{ fontSize: 10, color: '#bbb' }}>{sec?.name || team?.name}</span>
+                    <span style={{ fontSize: 10, color: '#ddd', marginLeft: 'auto' }}>{stickers.length}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(34px, 1fr))', gap: 4 }}>
+                    {stickers.map(s => (
+                      <StickerTile key={s.id} sticker={s} owned={friendOwned} onMouseDown={() => {}} onMouseEnter={() => {}} />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <button onClick={() => handleUnfollow(selected.user_id)}
+          style={{ fontSize: 12, color: '#e53935', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', marginTop: 4 }}>
+          Dejar de seguir
+        </button>
+      </div>
+    )
+  }
+
+  // ── Vista lista ───────────────────────────────────────────────────────────
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ background: '#fafafa', borderRadius: 12, padding: 16, border: '1px solid rgba(0,0,0,0.07)' }}>
+        <p style={{ fontWeight: 600, fontSize: 13, color: '#111', margin: '0 0 3px' }}>Agregar amigo</p>
+        <p style={{ fontSize: 11, color: '#888', margin: '0 0 12px', lineHeight: 1.5 }}>Pide a tu amigo su link de "Compartir álbum" y pégalo aquí</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input value={addInput} onChange={e => setAddInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            placeholder="Pega el link aquí…"
+            style={{ flex: 1, fontSize: 12, borderRadius: 10, padding: '9px 12px', outline: 'none', background: '#fff', border: '1.5px solid rgba(0,0,0,0.1)', color: '#111', transition: 'border-color 0.15s' }}
+            onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+            onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'} />
+          <button onClick={handleAdd} disabled={addStatus === 'loading' || !addInput.trim()}
+            style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#fff',
+              background: addStatus === 'success' ? C.emerald : !addInput.trim() || addStatus === 'loading' ? '#c4b5fd' : C.purple,
+              border: 'none', cursor: addStatus === 'loading' ? 'not-allowed' : 'pointer' }}>
+            {addStatus === 'success' ? '✓' : addStatus === 'loading' ? '…' : 'Agregar'}
+          </button>
+        </div>
+        {addError && <p style={{ fontSize: 11, color: '#e53935', marginTop: 8 }}>{addError}</p>}
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 24 }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${C.purple}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
+        </div>
+      ) : friends.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 0' }}>
+          <p style={{ fontSize: 28 }}>👥</p>
+          <p style={{ fontSize: 13, color: '#bbb', marginTop: 8 }}>Todavía no sigues a nadie</p>
+          <p style={{ fontSize: 11, color: '#ddd', marginTop: 4, lineHeight: 1.5 }}>Agrega el link de un amigo para ver su progreso y faltantes</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {friends.map(f => {
+            const owned = new Set(f.owned_ids || [])
+            const total = f.has_coca ? ALL_STICKERS_CC.length : ALL_STICKERS.length
+            const pct   = Math.round((owned.size / total) * 100)
+            const name  = f.email?.split('@')[0] || 'Amigo'
+            const color = avatarColor(f.email)
+            return (
+              <button key={f.user_id} onClick={() => setSelected(f)}
+                style={{ width: '100%', textAlign: 'left', background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: 14, cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.background = '#f3f3f5'}
+                onMouseOut={e  => e.currentTarget.style.background = '#fafafa'}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
+                    {name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: 13, color: '#111', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</p>
+                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 1 }}>{total - owned.size} faltantes</p>
+                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 900, color, flexShrink: 0 }}>{pct}%</span>
+                </div>
+                <div style={{ height: 4, background: 'rgba(0,0,0,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── PWA install guide ────────────────────────────────────────────────────────
 function PwaGuide({ onClose }) {
   const [os, setOs] = useState(() => /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'ios' : 'android')
@@ -707,7 +898,7 @@ function PwaGuide({ onClose }) {
 
 // ─── Side panel ───────────────────────────────────────────────────────────────
 function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, toggle }) {
-  const titles = { faltan: 'Faltantes', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
+  const titles = { faltan: 'Faltantes', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift', amigos: 'Amigos' }
   return (
     <>
       <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
@@ -723,6 +914,7 @@ function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, togg
             {page === 'exportar'  && <ExportarContent allStickers={allStickers} owned={owned} />}
             {page === 'compartir' && <CompartirContent user={user} albumOwnerId={albumOwnerId} />}
             {page === 'shift'     && <ShiftContent />}
+            {page === 'amigos'    && <AmigosContent user={user} />}
           </div>
         </div>
       </div>
@@ -741,6 +933,7 @@ function HamburgerMenu({ onOpen, onInstall }) {
   }, [])
   const items = [
     { id: 'faltan',    label: 'Faltantes',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { id: 'amigos',    label: 'Amigos',          icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
     { id: 'exportar',  label: 'Exportar',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
     { id: 'compartir', label: 'Compartir',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
     { id: 'instalar',  label: 'Agregar como app', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><polyline points="9 6 12 3 15 6"/><line x1="12" y1="3" x2="12" y2="14"/></svg> },

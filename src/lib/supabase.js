@@ -92,3 +92,31 @@ export async function getMyAlbumOwnerId(userId) {
     .maybeSingle()
   return data?.owner_id ?? null
 }
+
+// ─── Friends / Social ────────────────────────────────────────────────────────
+export async function followByToken(token, followerId) {
+  const { data: ownerId, error } = await supabase.rpc('find_owner_by_token', { p_token: token })
+  if (error) throw error
+  if (!ownerId || ownerId === followerId) return null
+
+  const { error: insertErr } = await supabase
+    .from('follows')
+    .upsert({ follower_id: followerId, following_id: ownerId }, { ignoreDuplicates: true })
+  if (insertErr) throw insertErr
+  return ownerId
+}
+
+export async function getFollowing(userId) {
+  const { data, error } = await supabase.rpc('get_following_with_progress', { p_follower_id: userId })
+  if (error) throw error
+  return data || []
+}
+
+export async function unfollowUser(followingId, followerId) {
+  const { error } = await supabase
+    .from('follows')
+    .delete()
+    .eq('follower_id', followerId)
+    .eq('following_id', followingId)
+  if (error) throw error
+}
