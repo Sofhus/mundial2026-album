@@ -58,15 +58,14 @@ export async function getOrCreateShareToken(userId) {
     .from('user_progress')
     .select('share_token')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (data?.share_token) return data.share_token
 
   const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6)
   await supabase
     .from('user_progress')
-    .update({ share_token: token })
-    .eq('user_id', userId)
+    .upsert({ user_id: userId, share_token: token, updated_at: new Date().toISOString() })
   return token
 }
 

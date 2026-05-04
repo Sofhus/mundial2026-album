@@ -331,7 +331,7 @@ function CompartirContent({ user, albumOwnerId }) {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>👥</div>
           <div>
             <p style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>Compartir álbum</p>
-            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para llenar el mismo álbum juntos (hermano, pareja…)</p>
+            <p style={{ fontSize: 11, color: '#888', marginTop: 2, lineHeight: 1.5 }}>Para llenar el mismo álbum</p>
           </div>
         </div>
         <button onClick={handleShareAccount} disabled={loadingToken} style={{ width: '100%', padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#fff', background: copiedAccount ? C.emerald : loadingToken ? '#c4b5fd' : C.purple, border: 'none', cursor: 'pointer' }}>
@@ -357,46 +357,148 @@ function CompartirContent({ user, albumOwnerId }) {
 // ─── Panel: Shift ─────────────────────────────────────────────────────────────
 function ShiftContent() {
   const services = ['IA & Automatización', 'Datos & Analytics', 'Desarrollo de Software', 'Ciberseguridad', 'Machine Learning']
+  const whoNeeds = [
+    'Negocios que quieren automatizar procesos repetitivos con IA',
+    'Empresas con datos valiosos que todavía no saben cómo aprovechar',
+    'Equipos que necesitan software a medida sin deuda técnica',
+    'Founders que quieren lanzar un producto rápido y bien construido',
+  ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <p style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#111', lineHeight: 1 }}>Shift.</p>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>AI · Data · Software · CDMX</p>
+        <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em', color: '#111', lineHeight: 1 }}>Shift.</p>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' }}>Tecnología · CDMX</p>
       </div>
-      <p style={{ fontSize: 13, color: '#555', lineHeight: 1.65 }}>
-        Studio especializado en inteligencia artificial, datos y desarrollo de software para empresas que necesitan eficiencia operativa y tecnología que realmente escala.
+
+      <p style={{ fontSize: 14, color: '#444', lineHeight: 1.75, margin: 0 }}>
+        Somos un studio de tecnología especializado en IA, datos y software a medida. Ayudamos a negocios a automatizar lo que los frena, entender sus datos y construir las herramientas que realmente necesitan.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {[{ val: '30+', label: 'Proyectos entregados' }, { val: '8', label: 'Industrias' }, { val: '340h', label: 'Horas ahorradas/mes' }, { val: '87%', label: 'Eficiencia promedio' }].map(({ val, label }) => (
-          <div key={label} style={{ background: '#f6f6f8', borderRadius: 12, padding: '12px 14px' }}>
-            <p style={{ fontSize: 22, fontWeight: 900, color: '#111', lineHeight: 1 }}>{val}</p>
+
+      <div>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 10 }}>¿Quién nos busca?</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {whoNeeds.map((item, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.purple, marginTop: 5, flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5, margin: 0 }}>{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 8 }}>Servicios</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {services.map(s => (
+            <span key={s} style={{ fontSize: 11, padding: '5px 11px', borderRadius: 6, background: 'rgba(124,58,237,0.07)', color: C.purple, fontWeight: 600 }}>{s}</span>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#bbb', textTransform: 'uppercase', marginBottom: 10 }}>Equipo</p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[{ name: 'Sofia Husny', role: 'Co-fundadora' }, { name: 'Gabriela Shaooli', role: 'Co-fundadora' }].map(({ name, role }) => (
+            <div key={name} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#111', margin: 0 }}>{name}</p>
+              <p style={{ fontSize: 11, color: '#aaa', marginTop: 3 }}>{role}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <a href="https://wa.me/525510807509?text=Hola%20Shift%2C%20me%20interesa%20agendar%20una%20consulta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+          <button style={{ width: '100%', padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
+            Agendar consulta gratuita
+          </button>
+        </a>
+        <p style={{ textAlign: 'center', fontSize: 11, color: '#bbb', marginTop: 8 }}>Sin costo · Sin compromiso</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Panel: Faltan ────────────────────────────────────────────────────────────
+function FaltanContent({ allStickers, owned, toggle }) {
+  const [search, setSearch] = useState('')
+
+  const missing = useMemo(() => allStickers.filter(s => !owned.has(s.id)), [allStickers, owned])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return missing
+    return missing.filter(s =>
+      s.id.toLowerCase().includes(q) ||
+      s.section.toLowerCase().includes(q) ||
+      (s.label || '').toLowerCase().includes(q)
+    )
+  }, [missing, search])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 10 }}>
+        {[
+          { val: missing.length, label: 'Faltan',    clr: '#111'    },
+          { val: allStickers.filter(s => owned.has(s.id)).length, label: 'Tengo', clr: C.emerald },
+        ].map(({ val, label, clr }) => (
+          <div key={label} style={{ flex: 1, background: '#f6f6f8', borderRadius: 12, padding: '10px 14px' }}>
+            <p style={{ fontSize: 22, fontWeight: 900, color: clr, lineHeight: 1 }}>{val}</p>
             <p style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{label}</p>
           </div>
         ))}
       </div>
-      <div>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#ccc', textTransform: 'uppercase', marginBottom: 8 }}>Servicios</p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {services.map(s => (
-            <span key={s} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: 'rgba(124,58,237,0.07)', color: C.purple, fontWeight: 600 }}>{s}</span>
-          ))}
-        </div>
+
+      <div style={{ position: 'relative' }}>
+        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#bbb', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="search" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por equipo o número…"
+          style={{ width: '100%', fontSize: 13, borderRadius: 12, padding: '10px 14px 10px 34px', outline: 'none', background: '#f6f6f8', border: '1px solid rgba(0,0,0,0.1)', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
+          onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+          onBlur={e  => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
+        />
       </div>
-      <a href="https://wa.me/525510807509?text=Hola%20Shift%2C%20me%20interesa%20agendar%20una%20consulta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-        <button style={{ width: '100%', padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, color: '#fff', background: C.purple, border: 'none', cursor: 'pointer' }}>
-          Agendar consulta gratis
-        </button>
-      </a>
-      <div style={{ textAlign: 'center' }}>
-        <a href="tel:5510807509" style={{ fontSize: 12, color: '#bbb', textDecoration: 'none' }}>55 1080 7509</a>
+
+      {search && (
+        <p style={{ fontSize: 11, color: '#aaa', margin: 0 }}>{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <p style={{ fontSize: 13, color: '#ccc' }}>{search ? 'Sin resultados' : '¡Álbum completo!'}</p>
+          </div>
+        ) : (
+          filtered.map(s => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#fafafa', border: '1px solid rgba(0,0,0,0.07)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: 8, flexShrink: 0, background: s.isRare ? '#fef3c7' : 'rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.05em', color: s.isRare ? '#b45309' : '#bbb' }}>{s.section}</span>
+                <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: s.isRare ? '#b45309' : '#555' }}>{s.num}</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label || s.id}</p>
+                {s.isRare && <p style={{ fontSize: 10, color: '#b45309', fontWeight: 600, marginTop: 1 }}>Rara</p>}
+              </div>
+              <button onClick={() => toggle(s.id)}
+                style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, padding: '6px 11px', borderRadius: 8, background: 'rgba(22,163,74,0.1)', color: '#15803d', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
+                onMouseOut={e  => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}>
+                Ya la tengo
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
 }
 
 // ─── Side panel ───────────────────────────────────────────────────────────────
-function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned }) {
-  const titles = { exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
+function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned, toggle }) {
+  const titles = { faltan: 'Me faltan', exportar: 'Exportar', compartir: 'Compartir', shift: 'Shift' }
   return (
     <>
       <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
@@ -408,6 +510,7 @@ function SidePanel({ page, onClose, user, albumOwnerId, allStickers, owned }) {
             <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.07)', border: 'none', cursor: 'pointer', fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
           </div>
           <div style={{ flex: 1, padding: 20 }}>
+            {page === 'faltan'    && <FaltanContent allStickers={allStickers} owned={owned} toggle={toggle} />}
             {page === 'exportar'  && <ExportarContent allStickers={allStickers} owned={owned} />}
             {page === 'compartir' && <CompartirContent user={user} albumOwnerId={albumOwnerId} />}
             {page === 'shift'     && <ShiftContent />}
@@ -428,6 +531,7 @@ function HamburgerMenu({ onOpen }) {
     return () => document.removeEventListener('mousedown', close)
   }, [])
   const items = [
+    { id: 'faltan',    label: 'Me faltan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
     { id: 'exportar',  label: 'Exportar',  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
     { id: 'compartir', label: 'Compartir', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> },
     { id: 'shift',     label: 'Shift',     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> },
@@ -853,7 +957,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f2f2f5' }}>
       {showCocaModal && <CocaModal onChoice={handleCocaChoice} />}
-      {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} />}
+      {sidePanel && <SidePanel page={sidePanel} onClose={() => setSidePanel(null)} user={user} albumOwnerId={albumOwnerId} allStickers={allStickers} owned={owned} toggle={toggle} />}
       {rareToast && <RareToast sticker={rareToast} onClose={() => setRareToast(null)} />}
       {milestone && <MilestoneCelebration milestone={milestone} onClose={() => setMilestone(null)} />}
 
