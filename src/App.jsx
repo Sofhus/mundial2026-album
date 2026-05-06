@@ -1,3 +1,4 @@
+import AdminDashboard from './AdminDashboard'
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   ALL_STICKERS, ALL_STICKERS_CC,
@@ -1369,6 +1370,8 @@ export default function App() {
   const addMany  = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n }) }, [])
   const removeMany = useCallback(ids => { setOwned(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n }) }, [])
   const handleRareFound = useCallback(sticker => { setRareToast(sticker) }, [])
+
+  if (window.location.pathname === '/admin') return <AdminDashboard />
 
   if (authLoading) return <LoadingScreen />
   if (!user)       return <LoginScreen hasPendingJoin={hasPendingJoin} />
