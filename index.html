@@ -8,7 +8,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#7c3aed" />
+    <meta name="theme-color" content="#1B3A8C" />
     <link rel="icon" type="image/png" href="/icon.png" />
 
     <!-- iOS home-screen install -->
@@ -26,16 +26,25 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+            fontFamily: {
+              sans: ['Outfit', "'Helvetica Neue'", 'Helvetica', 'Arial', 'sans-serif'],
+              display: ['Bebas Neue', 'Impact', "'Arial Narrow'", 'Arial', 'sans-serif'],
+            },
             colors: {
-              brand: '#7C3AED',
-              brandDark: '#5B21B6',
+              brand:    '#1B3A8C',
+              'brand-dark': '#142D6E',
+              accent:   '#D4AF37',
+              success:  '#16A34A',
+              pending:  '#A1A1AA',
+              duplicate:'#57534E',
+              error:    '#DC2626',
+              page:     '#F8F7F4',
             }
           }
         }
@@ -44,13 +53,13 @@
     <style>
       * { -webkit-user-select: none; user-select: none; }
       input, textarea, select { -webkit-user-select: text; user-select: text; }
-      html { font-family: 'Inter', system-ui, sans-serif; }
-      body { background: #f2f2f5; }
+      html { font-family: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+      body { background: #F8F7F4; }
       ::-webkit-scrollbar { width: 5px; height: 5px; }
-      ::-webkit-scrollbar-track { background: #e8e8ec; }
-      ::-webkit-scrollbar-thumb { background: #c0c0cc; border-radius: 3px; }
-      .surface { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-      .surface-sm { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+      ::-webkit-scrollbar-track { background: #EDEBE7; }
+      ::-webkit-scrollbar-thumb { background: #C4C0B8; border-radius: 3px; }
+      .surface { background: #fff; border: 1px solid #E5E2DB; border-radius: 16px; box-shadow: 0 1px 4px rgba(28,25,23,0.06); }
+      .surface-sm { background: #fff; border: 1px solid #E5E2DB; border-radius: 12px; box-shadow: 0 1px 4px rgba(28,25,23,0.06); }
       @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.25)} 100%{transform:scale(1)} }
       .pop { animation: pop 0.12s ease-out; }
     </style>

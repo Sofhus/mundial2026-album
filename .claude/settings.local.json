@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(grep -qE \"ready in|Local:|error\" \"C:\\\\\\\\Users\\\\\\\\gabri\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\c--Users-gabri-Documents-GitHub-mundial2026-album\\\\\\\\cca05549-2fa3-4932-9a34-76063d3aa3f0\\\\\\\\tasks\\\\\\\\bvpb25ier.output\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:4173/)",
+      "Bash(curl -s http://localhost:4173/manifest.webmanifest)",
+      "Bash(curl -s -o /dev/null -w \"sw.js HTTP %{http_code}\\\\n\" http://localhost:4173/sw.js)",
+      "Bash(grep -oE \"color: ['\\\\\"]#[0-9a-fA-F]{3,6}['\\\\\"]\" src/App.jsx)"
+    ]
+  }
+}

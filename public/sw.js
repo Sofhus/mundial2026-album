@@ -1,6 +1,6 @@
 // Simple offline-first service worker for Mundial 2026 album
-const CACHE = 'mundial2026-v1'
-const CORE  = ['/', '/index.html', '/icon.svg', '/manifest.webmanifest']
+const CACHE = 'mundial2026-v2'
+const CORE  = ['/', '/index.html', '/icon.png', '/manifest.webmanifest']
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()))
